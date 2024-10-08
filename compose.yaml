@@ -1,0 +1,12 @@
+name: syntinel-dashboard
+services:
+  syntinel-dashboard:
+    container_name: syntinel-dashboard
+    image: syntinel-dashboard:latest
+    build:
+      context: .
+    stdin_open: true
+    tty: true
+    ports:
+      - 3000:3000
+    restart: always
