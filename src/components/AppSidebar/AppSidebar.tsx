@@ -11,15 +11,8 @@ import {
 } from "lucide-react";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -28,7 +21,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Collapsible } from "@/components/ui/collapsible";
 
 import { AppSidebarFooter } from "@/components/AppSidebar/AppSidebarFooter";
 

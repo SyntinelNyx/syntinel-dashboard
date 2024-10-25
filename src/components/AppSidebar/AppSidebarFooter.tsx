@@ -1,4 +1,5 @@
 import { User2, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -13,7 +14,27 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
+import { apiFetch } from "@/lib/api";
+
 export function AppSidebarFooter() {
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      const response = await apiFetch("/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        router.push("/auth");
+      } else {
+        console.error("Failed to log out");
+      }
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    }
+  };
+
   return (
     <SidebarFooter>
       <SidebarMenu>
@@ -29,13 +50,16 @@ export function AppSidebarFooter() {
               side="top"
               className="w-[--radix-popper-anchor-width]"
             >
-              <DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
                 <span>Account</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="cursor-pointer">
                 <span>Billing</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="cursor-pointer"
+              >
                 <span>Sign out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>

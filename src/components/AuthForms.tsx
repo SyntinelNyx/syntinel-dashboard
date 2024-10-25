@@ -1,10 +1,13 @@
 "use client";
 import { useForm } from "react-hook-form";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,9 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -24,8 +24,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { apiFetch } from "@/lib/api";
 
 const LoginFormSchema = z.object({
+  account_type: z.enum(["root", "iam"], {
+    errorMap: () => ({ message: "You must select a user type." }),
+  }),
   username: z.string().min(1, {
     message: "Username cannot be empty.",
   }),
@@ -48,16 +60,38 @@ const RegisterFormSchema = z.object({
 });
 
 export const LoginForm = () => {
+  const router = useRouter();
+
   const loginForm = useForm<z.infer<typeof LoginFormSchema>>({
     resolver: zodResolver(LoginFormSchema),
     defaultValues: {
+      account_type: "root",
       username: "",
       password: "",
     },
   });
 
-  function onSubmit(data: z.infer<typeof LoginFormSchema>) {
-    console.log(data);
+  async function onSubmit(data: z.infer<typeof LoginFormSchema>) {
+    try {
+      const response = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({
+          account_type: data.account_type,
+          username: data.username,
+          password: data.password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Login failed:", errorData);
+        return;
+      }
+
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+    }
   }
 
   return (
@@ -72,6 +106,30 @@ export const LoginForm = () => {
             onSubmit={loginForm.handleSubmit(onSubmit)}
             className="flex flex-col space-y-6"
           >
+            <FormField
+              control={loginForm.control}
+              name="account_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account Type</FormLabel>
+                  <FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="root">Root Account</SelectItem>
+                        <SelectItem value="iam">IAM Account</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={loginForm.control}
               name="username"
@@ -98,7 +156,6 @@ export const LoginForm = () => {
                 </FormItem>
               )}
             />
-
             <Button type="submit">Login</Button>
           </form>
         </Form>
@@ -122,7 +179,7 @@ export const RegisterForm = () => {
     },
   });
 
-  function onSubmit(data: z.infer<typeof LoginFormSchema>) {
+  function onSubmit(data: z.infer<typeof RegisterFormSchema>) {
     console.log(data);
   }
 
