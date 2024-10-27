@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { PublicEnvScript } from "next-runtime-env";
 
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
@@ -32,7 +33,8 @@ export default function RootLayout({
           defer
           src="https://umami.miguelmuniz.com/script.js"
           data-website-id="462ec6f6-dd14-4ee5-8fd0-0d0f028edd22"
-        ></script>
+        />
+        <PublicEnvScript />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

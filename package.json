@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -27,10 +27,12 @@
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.447.0",
     "next": "14.2.14",
+    "next-runtime-env": "^3.2.2",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.1",
+    "sharp": "^0.33.5",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"

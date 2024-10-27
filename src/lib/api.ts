@@ -1,6 +1,9 @@
 import Cookies from "js-cookie";
+import { env } from "next-runtime-env";
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
+  const NEXT_PUBLIC_API_ENDPOINT = env("NEXT_PUBLIC_API_ENDPOINT");
+
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
@@ -10,14 +13,11 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     headers["X-CSRF-Token"] = csrfToken;
   }
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_ENDPOINT}${path}`,
-    {
-      headers,
-      ...options,
-      credentials: "include",
-    },
-  );
+  const response = await fetch(`${NEXT_PUBLIC_API_ENDPOINT}${path}`, {
+    headers,
+    ...options,
+    credentials: "include",
+  });
 
   if (!response.ok) {
     const responseData = await response.json();
