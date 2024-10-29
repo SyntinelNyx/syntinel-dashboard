@@ -1,15 +1,12 @@
 "use client";
-import {
-  Blocks,
-  Bug,
-  ChevronsLeftRightEllipsis,
-  CircleFadingPlus,
-  Container,
-  HardDrive,
-  Home,
-  Settings,
-} from "lucide-react";
+import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -19,56 +16,17 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
   useSidebar,
 } from "@/components/ui/sidebar";
 
+import { items } from "@/components/AppSidebar/AppSidebarItems";
 import { AppSidebarFooter } from "@/components/AppSidebar/AppSidebarFooter";
-
-const items = [
-  {
-    title: "Overview",
-    url: "/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Assets",
-    url: "/dashboard/assets",
-    icon: HardDrive,
-  },
-  {
-    title: "Vulnerabilities",
-    url: "/dashboard/vulnerabilities",
-    icon: Bug,
-  },
-  {
-    title: "Environments",
-    url: "/dashboard/environments",
-    icon: Container,
-  },
-  {
-    title: "Modules",
-    url: "/dashboard/modules",
-    icon: ChevronsLeftRightEllipsis,
-  },
-  {
-    title: "Snapshots",
-    url: "/dashboard/snapshots",
-    icon: CircleFadingPlus,
-  },
-  {
-    title: "Plugins",
-    url: "/dashboard/plugins",
-    icon: Blocks,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
-];
 
 export function AppSidebar() {
   const { open } = useSidebar();
+
+  const [settingsOpen, setSettingsOpen] = useState(true);
 
   return (
     <Sidebar collapsible="icon">
@@ -77,16 +35,56 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {items.map((item) =>
+                item.subitem ? (
+                  <SidebarMenuItem key={item.title}>
+                    <Collapsible
+                      defaultOpen
+                      className="group/collapsible"
+                      onOpenChange={(isOpen) => setSettingsOpen(isOpen)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton asChild>
+                          <div className="flex w-full items-center">
+                            <item.icon className="mr-2" />
+                            <span>{item.title}</span>
+                            <ChevronDown
+                              className={`ml-auto transition-transform ${
+                                settingsOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuButton asChild>
+                            <a
+                              href={item.subitem.url}
+                              className="flex items-center space-x-2"
+                            >
+                              <item.subitem.icon />
+                              <span>{item.subitem.title}</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  </SidebarMenuItem>
+                ) : (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <a
+                        href={item.url}
+                        className="flex items-center space-x-2"
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ),
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

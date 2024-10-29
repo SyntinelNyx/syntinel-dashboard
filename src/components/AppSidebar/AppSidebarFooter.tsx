@@ -50,7 +50,10 @@ export function AppSidebarFooter() {
               side="top"
               className="w-[--radix-popper-anchor-width]"
             >
-              <DropdownMenuItem className="cursor-pointer">
+              <DropdownMenuItem
+                onClick={() => router.push("/dashboard/account")}
+                className="cursor-pointer"
+              >
                 <span>Account</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="cursor-pointer">
