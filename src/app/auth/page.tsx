@@ -1,9 +1,14 @@
+"use client";
+import { useState } from "react";
 import Image from "next/image";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoginForm, RegisterForm } from "@/components/AuthForms";
+import { LoginForm } from "@/components/Forms/AuthForms/LoginForm";
+import { RegisterForm } from "@/components/Forms/AuthForms/RegisterForm";
 
 export default function AuthPage() {
+  const [activeTab, setActiveTab] = useState("login");
+
   return (
     <main className="flex h-screen justify-center font-[family-name:var(--font-geist-sans)] md:justify-start">
       <div className="hidden md:flex md:w-[60%]">
@@ -17,7 +22,12 @@ export default function AuthPage() {
         />
       </div>
       <div className="flex items-center justify-center md:w-[40%]">
-        <Tabs defaultValue="login" className="w-full max-w-[400px] px-4">
+        <Tabs
+          defaultValue="login"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full max-w-[400px] px-4"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
@@ -26,7 +36,7 @@ export default function AuthPage() {
             <LoginForm />
           </TabsContent>
           <TabsContent value="register">
-            <RegisterForm />
+            <RegisterForm onSuccess={() => setActiveTab("login")} />
           </TabsContent>
         </Tabs>
       </div>

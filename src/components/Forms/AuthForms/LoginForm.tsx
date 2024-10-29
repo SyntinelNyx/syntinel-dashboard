@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select";
 
 import { apiFetch } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 const LoginFormSchema = z.object({
   account_type: z.enum(["root", "iam"], {
@@ -46,21 +47,9 @@ const LoginFormSchema = z.object({
   }),
 });
 
-const RegisterFormSchema = z.object({
-  email: z
-    .string()
-    .min(1, { message: "Email cannot be empty." })
-    .email("Email is not valid."),
-  username: z.string().min(3, {
-    message: "Username has to be longer than 3 characters.",
-  }),
-  password: z.string().min(12, {
-    message: "Password has to be longer than 12 characters.",
-  }),
-});
-
 export const LoginForm = () => {
   const router = useRouter();
+  const { toast } = useToast();
 
   const loginForm = useForm<z.infer<typeof LoginFormSchema>>({
     resolver: zodResolver(LoginFormSchema),
@@ -83,14 +72,30 @@ export const LoginForm = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Login failed:", errorData);
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: await response.json(),
+        });
         return;
       }
 
+      toast({
+        title: "Login Successful",
+        description: "Successfully Logged In",
+      });
       router.push("/dashboard");
     } catch (error) {
-      console.error("Error submitting form:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An Unknown Error Has Occurred";
+
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: errorMessage,
+      });
     }
   }
 
@@ -165,79 +170,6 @@ export const LoginForm = () => {
           Forgot password?
         </Link>
       </CardFooter>
-    </Card>
-  );
-};
-
-export const RegisterForm = () => {
-  const registerForm = useForm<z.infer<typeof RegisterFormSchema>>({
-    resolver: zodResolver(RegisterFormSchema),
-    defaultValues: {
-      email: "",
-      username: "",
-      password: "",
-    },
-  });
-
-  function onSubmit(data: z.infer<typeof RegisterFormSchema>) {
-    console.log(data);
-  }
-
-  return (
-    <Card>
-      <CardHeader className="-mb-3 text-center text-2xl">
-        <CardTitle>Register</CardTitle>
-        <CardDescription>Register a root user account.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <Form {...registerForm}>
-          <form
-            onSubmit={registerForm.handleSubmit(onSubmit)}
-            className="flex flex-col space-y-6"
-          >
-            <FormField
-              control={registerForm.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Email" {...field} type="email" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={registerForm.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Username" {...field} type="text" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={registerForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Password" {...field} type="password" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit">Register</Button>
-          </form>
-        </Form>
-      </CardContent>
     </Card>
   );
 };

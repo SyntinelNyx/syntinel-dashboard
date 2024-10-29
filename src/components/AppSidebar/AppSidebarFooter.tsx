@@ -15,9 +15,11 @@ import {
 } from "@/components/ui/sidebar";
 
 import { apiFetch } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export function AppSidebarFooter() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSignOut = async () => {
     try {
@@ -25,13 +27,31 @@ export function AppSidebarFooter() {
         method: "POST",
       });
 
-      if (response.ok) {
-        router.push("/auth");
-      } else {
-        console.error("Failed to log out");
+      if (!response.ok) {
+        toast({
+          variant: "destructive",
+          title: "Logout Failed",
+          description: await response.json(),
+        });
+        return;
       }
+
+      toast({
+        title: "Logout Successful",
+        description: "Successfully Logged Out",
+      });
+      router.push("/auth");
     } catch (error) {
-      console.error("Error during sign out:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An Unknown Error Has Occurred";
+
+      toast({
+        variant: "destructive",
+        title: "Logout Failed",
+        description: errorMessage,
+      });
     }
   };
 
