@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
 export function AppSidebarFooter() {

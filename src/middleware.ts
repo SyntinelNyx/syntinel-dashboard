@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { apiFetch } from "@/lib/api";
+import { apiFetch } from "@/lib/api-fetch";
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
