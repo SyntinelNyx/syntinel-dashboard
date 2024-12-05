@@ -18,8 +18,8 @@ export default function DashboardLayout({
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
       <AppSidebar />
-      <main>
-        <SidebarTrigger className="m-3" />
+      <SidebarTrigger className="m-3" />
+      <main className="flex h-full w-full items-center justify-center px-4">
         {children}
       </main>
     </SidebarProvider>

@@ -32,8 +32,8 @@ export const items = [
     icon: Container,
   },
   {
-    title: "Modules",
-    url: "/dashboard/modules",
+    title: "Actions",
+    url: "/dashboard/actions",
     icon: ChevronsLeftRightEllipsis,
   },
   {
