@@ -8,7 +8,7 @@ import {
   Settings,
   Container,
   UsersRound,
-  Shield
+  Shield,
 } from "lucide-react";
 
 export const items = [
@@ -55,13 +55,13 @@ export const items = [
       {
         title: "User Management",
         url: "/dashboard/settings/management",
-        icon: UsersRound
+        icon: UsersRound,
       },
       {
         title: "Role Management",
         url: "/dashboard/settings/role-management",
-        icon: Shield
-      }
-    ]
+        icon: Shield,
+      },
+    ],
   },
 ];

@@ -35,7 +35,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.map((item) =>
                 item.subitem ? (
                   <SidebarMenuItem key={item.title}>
                     <Collapsible
@@ -85,8 +85,8 @@ export function AppSidebar() {
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )
-              ))}
+                ),
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

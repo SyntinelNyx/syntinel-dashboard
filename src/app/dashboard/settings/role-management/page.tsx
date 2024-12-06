@@ -49,10 +49,11 @@ async function fetchRoles() {
 }
 
 function RoleManagement() {
+  const { toast } = useToast();
+
   const [roles, setRoles] = useState<Role[]>([]);
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,7 +81,7 @@ function RoleManagement() {
       role: formData.get("role") as string,
     };
     setRoles(
-      roles?.map((role) => (role.id === updatedRole.id ? updatedRole : role)),
+      roles.map((role) => (role.id === updatedRole.id ? updatedRole : role)),
     );
     setEditingRole(null);
     toast({
