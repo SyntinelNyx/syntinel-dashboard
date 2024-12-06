@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Pencil, Trash2 } from "lucide-react";
+import { apiFetch } from "@/lib/api-fetch";
 import { RoleCreateForm } from "@/components/Forms/PermsForms/RoleCreateForm";
 
 interface Role {
@@ -30,16 +31,43 @@ interface Role {
   role: string;
 }
 
-const initialRoles: Role[] = [
-  { id: 1, role: "Maintainer" },
-  { id: 2, role: "Editor" }
-];
+async function fetchRoles() {
+  try {
+    const response = await apiFetch("/role/retrieve", { method: "POST" });
+    if (!response.ok) {
+      throw new Error("Failed to fetch roles");
+    }
+    const data = await response.json();
+    return data as Role[];
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : "An error occurred while fetching roles"
+    );
+  }
+}
 
 function RoleManagement() {
-  const [roles, setRoles] = useState<Role[]>(initialRoles);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRoles = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedRoles = await fetchRoles();
+        setRoles(fetchedRoles);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load roles");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadRoles();
+  }, []);
 
   const handleEditRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,6 +96,26 @@ function RoleManagement() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-10">
+        <Toaster />
+        <h1 className="mb-5 text-2xl font-bold">Role Management</h1>
+        <div>Loading roles...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-10">
+        <Toaster />
+        <h1 className="mb-5 text-2xl font-bold">Role Management</h1>
+        <div className="text-red-600">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-10">
       <Toaster />
@@ -80,7 +128,7 @@ function RoleManagement() {
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <RoleCreateForm setIsAddRoleOpen={setIsAddRoleOpen}/>
+            <RoleCreateForm setIsAddRoleOpen={setIsAddRoleOpen} />
           </DialogContent>
         </Dialog>
       </div>
