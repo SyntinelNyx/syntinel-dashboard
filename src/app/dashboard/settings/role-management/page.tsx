@@ -41,7 +41,9 @@ async function fetchRoles() {
     return data as Role[];
   } catch (error) {
     throw new Error(
-      error instanceof Error ? error.message : "An error occurred while fetching roles"
+      error instanceof Error
+        ? error.message
+        : "An error occurred while fetching roles",
     );
   }
 }
@@ -78,7 +80,7 @@ function RoleManagement() {
       role: formData.get("role") as string,
     };
     setRoles(
-      roles.map((role) => (role.id === updatedRole.id ? updatedRole : role)),
+      roles?.map((role) => (role.id === updatedRole.id ? updatedRole : role)),
     );
     setEditingRole(null);
     toast({
@@ -140,7 +142,7 @@ function RoleManagement() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {roles.map((role) => (
+          {roles?.map((role) => (
             <TableRow key={role.id}>
               <TableCell>{role.role}</TableCell>
               <TableCell>
