@@ -27,7 +27,7 @@ export default function AccountSettingsPage() {
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
-  const handleSubmit = (e: React.FormEvent) => {};
+  const handleSubmit = () => {};
 
   const handleDeleteAccount = () => {};
 

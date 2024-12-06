@@ -162,7 +162,7 @@ function RoleManagement() {
                       <DialogHeader>
                         <DialogTitle>Edit Role</DialogTitle>
                         <DialogDescription>
-                          Make changes to the role's here.
+                          Make changes to the role&apos;s here.
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleEditRole}>

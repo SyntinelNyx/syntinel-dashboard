@@ -214,7 +214,7 @@ function UserManagement() {
                       <DialogHeader>
                         <DialogTitle>Edit User</DialogTitle>
                         <DialogDescription>
-                          Make changes to the user's information here.
+                          Make changes to the user&apos;s information here.
                         </DialogDescription>
                       </DialogHeader>
                       <form onSubmit={handleEditUser}>

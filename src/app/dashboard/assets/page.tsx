@@ -273,14 +273,6 @@ type Asset = {
   notes: string;
 };
 
-const Chip: React.FC<{ label: string }> = ({ label }) => {
-  return (
-    <span className="m-1 inline-flex items-center rounded-full bg-gray-800 px-2 py-1 text-sm font-medium text-white">
-      {label}
-    </span>
-  );
-};
-
 const columns: ColumnDef<Asset>[] = [
   {
     id: "select",
