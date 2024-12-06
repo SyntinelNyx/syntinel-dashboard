@@ -20,11 +20,7 @@ const RoleCreateFormSchema = z.object({
   start_scans: z.boolean(),
 });
 
-interface RoleCreateFormProps {
-  setIsAddRoleOpen: (open: boolean) => void;
-}
-
-export const RoleCreateForm = ({ setIsAddRoleOpen }: RoleCreateFormProps) => {
+export const RoleCreateForm = () => {
   const { toast } = useToast();
 
   const roleForm = useForm<z.infer<typeof RoleCreateFormSchema>>({
@@ -34,7 +30,6 @@ export const RoleCreateForm = ({ setIsAddRoleOpen }: RoleCreateFormProps) => {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = roleForm;

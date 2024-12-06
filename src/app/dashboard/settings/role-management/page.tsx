@@ -131,7 +131,7 @@ function RoleManagement() {
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <RoleCreateForm setIsAddRoleOpen={setIsAddRoleOpen} />
+            <RoleCreateForm />
           </DialogContent>
         </Dialog>
       </div>
