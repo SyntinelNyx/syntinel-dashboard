@@ -72,8 +72,8 @@ export const RoleCreateForm = ({ setIsAddRoleOpen }: RoleCreateFormProps) => {
         return;
       }
 
-      router.push("/dashboard/settings/role-management");  
-      setIsAddRoleOpen(false); 
+      window.location.reload(); 
+      
       toast({
         title: "Role Creation Successful",
         description: "Role Successfully Created",
