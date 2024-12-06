@@ -1,5 +1,6 @@
 "use client";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,13 @@ const RoleCreateFormSchema = z.object({
   start_scans: z.boolean(),
 });
 
-export const RoleCreateForm = () => {
+interface RoleCreateFormProps {
+  setIsAddRoleOpen: (open: boolean) => void;
+}
+
+
+export const RoleCreateForm = ({ setIsAddRoleOpen }: RoleCreateFormProps) => {
+  const router = useRouter();
   const { toast } = useToast();
 
   const roleForm = useForm<z.infer<typeof RoleCreateFormSchema>>({
@@ -65,6 +72,8 @@ export const RoleCreateForm = () => {
         return;
       }
 
+      router.push("/dashboard/settings/role-management");  
+      setIsAddRoleOpen(false); 
       toast({
         title: "Role Creation Successful",
         description: "Role Successfully Created",
