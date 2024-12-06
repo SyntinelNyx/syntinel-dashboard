@@ -35,7 +35,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) =>
+              {items.map((item) => (
                 item.subitem ? (
                   <SidebarMenuItem key={item.title}>
                     <Collapsible
@@ -57,17 +57,19 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <SidebarMenuSub>
-                          <SidebarMenuButton asChild>
-                            <a
-                              href={item.subitem.url}
-                              className="flex items-center space-x-2"
-                            >
-                              <item.subitem.icon />
-                              <span>{item.subitem.title}</span>
-                            </a>
-                          </SidebarMenuButton>
-                        </SidebarMenuSub>
+                        {item.subitem.map((subitem) => (
+                          <SidebarMenuSub key={subitem.title}>
+                            <SidebarMenuButton asChild>
+                              <a
+                                href={subitem.url}
+                                className="flex items-center space-x-2"
+                              >
+                                <subitem.icon />
+                                <span>{subitem.title}</span>
+                              </a>
+                            </SidebarMenuButton>
+                          </SidebarMenuSub>
+                        ))}
                       </CollapsibleContent>
                     </Collapsible>
                   </SidebarMenuItem>
@@ -83,8 +85,8 @@ export function AppSidebar() {
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ),
-              )}
+                )
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
