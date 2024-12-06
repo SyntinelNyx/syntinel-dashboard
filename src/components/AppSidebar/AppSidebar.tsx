@@ -57,17 +57,19 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                       </CollapsibleTrigger>
                       <CollapsibleContent>
-                        <SidebarMenuSub>
-                          <SidebarMenuButton asChild>
-                            <a
-                              href={item.subitem.url}
-                              className="flex items-center space-x-2"
-                            >
-                              <item.subitem.icon />
-                              <span>{item.subitem.title}</span>
-                            </a>
-                          </SidebarMenuButton>
-                        </SidebarMenuSub>
+                        {item.subitem.map((subitem) => (
+                          <SidebarMenuSub key={subitem.title}>
+                            <SidebarMenuButton asChild>
+                              <a
+                                href={subitem.url}
+                                className="flex items-center space-x-2"
+                              >
+                                <subitem.icon />
+                                <span>{subitem.title}</span>
+                              </a>
+                            </SidebarMenuButton>
+                          </SidebarMenuSub>
+                        ))}
                       </CollapsibleContent>
                     </Collapsible>
                   </SidebarMenuItem>
