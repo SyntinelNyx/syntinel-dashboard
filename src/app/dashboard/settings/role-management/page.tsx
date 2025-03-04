@@ -43,7 +43,28 @@ async function fetchRoles() {
     throw new Error(
       error instanceof Error
         ? error.message
-        : "An error occurred while fetching roles",
+        : "An error occurred while fetching roles"
+    );
+  }
+}
+
+async function deleteRole(roleName: string) {
+  try {
+    const response = await apiFetch("/role/delete", {
+      method: "POST",
+      body: JSON.stringify({ role_name: roleName })
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to delete role");
+    }
+
+    return true;
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "An error occurred while deleting the role"
     );
   }
 }
@@ -90,13 +111,24 @@ function RoleManagement() {
     });
   };
 
-  const handleDeleteRole = (roleId: number) => {
-    setRoles(roles.filter((role) => role.id !== roleId));
-    toast({
-      title: "Role Deleted",
-      description: "The role has been removed from the system.",
-      variant: "destructive",
-    });
+  const handleDeleteRole = async (roleName: string) => {
+    try {
+      const success = await deleteRole(roleName);
+      if (success) {
+        setRoles(roles.filter((role) => role.role !== roleName));
+        toast({
+          title: "Role Deleted",
+          description: "The role has been deleted.",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to delete the role. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -187,7 +219,7 @@ function RoleManagement() {
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleDeleteRole(role.id)}
+                    onClick={() => handleDeleteRole(role.role)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
