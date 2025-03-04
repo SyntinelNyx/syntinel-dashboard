@@ -123,6 +123,7 @@ function RoleManagement() {
         });
       }
     } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete role");
       toast({
         title: "Error",
         description: "Failed to delete the role. Please try again.",
