@@ -32,6 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { CircleHelp } from "lucide-react";
+
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
@@ -103,7 +105,13 @@ export const LoginForm = () => {
     <Card>
       <CardHeader className="-mb-2 text-center text-2xl">
         <CardTitle>Login</CardTitle>
-        <CardDescription>Login as a root user or an IAM user.</CardDescription>
+        <CardDescription>Login as a root user or an IAM user.&nbsp;
+          <span className="inline-flex align-middle ml-1">
+            <Link href={"https://wiki.syntinel.dev/"}>
+              <CircleHelp className="w-4 h-4" />
+            </Link>
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Form {...loginForm}>
