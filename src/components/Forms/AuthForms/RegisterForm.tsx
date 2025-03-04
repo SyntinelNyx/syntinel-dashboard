@@ -1,5 +1,6 @@
 "use client";
 import { useForm } from "react-hook-form";
+import Link from "next/link";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,6 +25,8 @@ import {
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
+
+import { CircleHelp } from "lucide-react";
 
 const RegisterFormSchema = z.object({
   email: z
@@ -93,7 +96,13 @@ export const RegisterForm = ({ onSuccess }: { onSuccess: () => void }) => {
     <Card>
       <CardHeader className="-mb-3 text-center text-2xl">
         <CardTitle>Register</CardTitle>
-        <CardDescription>Register a root user account.</CardDescription>
+        <CardDescription>Register a root user account.&nbsp;
+          <span className="inline-flex align-middle ml-1">
+            <Link href={"https://wiki.syntinel.dev/"}>
+              <CircleHelp className="w-4 h-4" />
+            </Link>
+          </span>
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Form {...registerForm}>

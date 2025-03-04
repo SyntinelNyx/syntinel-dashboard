@@ -19,6 +19,12 @@ import {
   SidebarMenuSub,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "@/components/ui/tooltip"
 
 import { items } from "@/components/AppSidebar/AppSidebarItems";
 import { AppSidebarFooter } from "@/components/AppSidebar/AppSidebarFooter";
@@ -49,9 +55,8 @@ export function AppSidebar() {
                             <item.icon className="mr-2" />
                             <span>{item.title}</span>
                             <ChevronDown
-                              className={`ml-auto transition-transform ${
-                                settingsOpen ? "rotate-180" : ""
-                              }`}
+                              className={`ml-auto transition-transform ${settingsOpen ? "rotate-180" : ""
+                                }`}
                             />
                           </div>
                         </SidebarMenuButton>
@@ -65,7 +70,13 @@ export function AppSidebar() {
                                 className="flex items-center space-x-2"
                               >
                                 <subitem.icon />
-                                <span>{subitem.title}</span>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <span>{subitem.title}</span></TooltipTrigger>
+                                    <TooltipContent>{subitem.tooltip}</TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </a>
                             </SidebarMenuButton>
                           </SidebarMenuSub>
@@ -81,7 +92,13 @@ export function AppSidebar() {
                         className="flex items-center space-x-2"
                       >
                         <item.icon />
-                        <span>{item.title}</span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <span>{item.title}</span></TooltipTrigger>
+                            <TooltipContent>{item.tooltip}</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
