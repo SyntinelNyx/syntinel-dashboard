@@ -408,7 +408,13 @@ function DataTable() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <div className="mt-10 flex items-center justify-center py-4">
+      <h1 className="mt-12 text-2xl font-bold">Vulnerabilitiy & Scan</h1>
+      <div className="flex justify-end -mt-8">
+        <Button>
+          Start New Scan
+        </Button>
+      </div>
+      <div className="mt-2 flex items-center justify-center py-4">
         <Input
           placeholder="Filter vulnerabilities..."
           value={
@@ -452,9 +458,9 @@ function DataTable() {
                     {header.isPlaceholder
                       ? null
                       : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -519,5 +525,9 @@ function DataTable() {
 }
 
 export default function VulnsPage() {
-  return <DataTable />;
+  return (
+    <div className="container w-full">
+      <DataTable />
+    </div>
+  );
 }
