@@ -78,10 +78,10 @@ export default function AssetsPage() {
 
   return (
     <div className="container w-full">
-      {assets.length === 0 ? (
+      {assets?.length === 0 ? (
         <div className="flex h-full mt-12 justify-center items-center text-gray-500">Loading assets...</div>
       ) : (
-        <DataTable data={assets} />
+        <DataTable data={assets ?? []} />
       )}
     </div>
   );
