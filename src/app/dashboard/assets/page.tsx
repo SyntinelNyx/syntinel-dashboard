@@ -74,7 +74,7 @@ export default function AssetsPage() {
     }
 
     fetchAssets();
-  }, []);
+  }, [toast]);
 
   return (
     <div className="container w-full">
