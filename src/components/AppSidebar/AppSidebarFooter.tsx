@@ -28,18 +28,15 @@ export function AppSidebarFooter() {
       });
 
       if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Logout Failed",
-          description: await response.json(),
-        });
-        return;
+        const errorJson = await response.json();
+        throw new Error(errorJson.message || "Failed to logout")
       }
 
-      toast({
+      localStorage.setItem("postAuthToast", JSON.stringify({
         title: "Logout Successful",
-        description: "Successfully Logged Out",
-      });
+        description: "Successfully Logged Out"
+      }));
+
       router.push("/auth");
     } catch (error) {
       const errorMessage =

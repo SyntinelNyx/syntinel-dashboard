@@ -95,7 +95,7 @@ export default function VulnsPage() {
 
 const Chip: React.FC<{ label: string }> = ({ label }) => {
   return (
-    <span className="m-1 inline-flex items-center rounded-full bg-gray-800 px-2 py-1 text-sm font-medium text-white">
+    <span className="m-1 inline-flex items-center rounded-full bg-muted px-2 py-1 text-sm font-medium text-muted-foreground">
       {label}
     </span>
   );
