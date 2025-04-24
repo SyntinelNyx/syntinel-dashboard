@@ -164,8 +164,12 @@ const columns: ColumnDef<Vulnerability>[] = [
   },
   {
     accessorKey: "lastSeen",
-    header: "Last Seen",
-    cell: ({ row }) => <div>{row.getValue("lastSeen")}</div>,
+    header: "Last Updated",
+    cell: ({ row }) => {
+      const raw = row.getValue("lastSeen");
+      const date = new Date(raw as string);
+      return <div>{date.toLocaleString()}</div>
+    },
   },
   {
     id: "actions",

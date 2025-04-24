@@ -119,7 +119,11 @@ const columns: ColumnDef<Scan>[] = [
   {
     accessorKey: "scanDate",
     header: "Scan Date",
-    cell: ({ row }) => <div>{row.getValue("scanDate")}</div>,
+    cell: ({ row }) => {
+      const raw = row.getValue("scanDate");
+      const date = new Date(raw as string);
+      return <div>{date.toLocaleString()}</div>
+    },
   },
   {
     accessorKey: "scannerName",
