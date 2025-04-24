@@ -2,11 +2,7 @@ import React from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 const users = [
-  { username: "Alice", lastLogin: "November 1, 2024", isOnline: true },
-  { username: "Bob", lastLogin: "October 30, 2024", isOnline: false },
-  { username: "Charlie", lastLogin: "October 15, 2024", isOnline: true },
-  { username: "Diana", lastLogin: "November 2, 2024", isOnline: false },
-  { username: "Eve", lastLogin: "September 20, 2024", isOnline: true },
+  { username: "demouser", lastLogin: "April 23rd, 2025", isOnline: true },
 ];
 
 export default function UserGrid() {
@@ -28,9 +24,8 @@ export default function UserGrid() {
                 </p>
                 <div className="mt-2">
                   <span
-                    className={`inline-block h-3 w-3 rounded-full ${
-                      user.isOnline ? "bg-green-500" : "bg-red-500"
-                    }`}
+                    className={`inline-block h-3 w-3 rounded-full ${user.isOnline ? "bg-green-500" : "bg-red-500"
+                      }`}
                   ></span>
                   <span className="ml-2 text-sm">
                     {user.isOnline ? "Online" : "Offline"}

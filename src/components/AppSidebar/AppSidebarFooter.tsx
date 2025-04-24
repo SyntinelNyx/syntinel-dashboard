@@ -62,7 +62,7 @@ export function AppSidebarFooter() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton>
-                <User2 /> {"Username"}
+                <User2 /> {"demouser"}
                 <ChevronUp className="ml-auto" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>

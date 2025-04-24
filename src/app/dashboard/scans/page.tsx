@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -35,32 +35,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 
-import { apiFetch } from "@/lib/api-fetch"
+import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
-type Vulnerability = {
+type Scan = {
   id: string;
-  status: "active" | "resurfaced" | "resolved";
-  vulnerability: string;
-  severity: string;
-  cvss: number;
-  assetsAffected: string[];
-  lastSeen: string;
+  scanDate: string;
+  scannerName: string;
+  scannedBy: string;
 };
 
-export default function VulnsPage() {
+export default function ScanPage() {
   const { toast } = useToast();
-  const [vulns, setVulns] = useState<Vulnerability[]>([]);
+  const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    async function fetchVulns() {
+    async function fetchScans() {
       try {
-        const res = await apiFetch("/vuln/retrieve");
+        const res = await apiFetch("/scan/retrieve");
         const json = await res.json();
 
-        setVulns(json);
+        setScans(json);
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -69,7 +67,7 @@ export default function VulnsPage() {
 
         toast({
           variant: "destructive",
-          title: "Vulnerability Fetch Failed",
+          title: "Scans Fetch Failed",
           description: errorMessage,
         });
       } finally {
@@ -77,31 +75,23 @@ export default function VulnsPage() {
       }
     }
 
-    fetchVulns();
+    fetchScans();
   }, [toast]);
 
   return (
     <div className="container w-full">
       {loading ? (
         <div className="flex items-center justify-center h-full mt-12">
-          <p className="text-muted-foreground">Loading vulnerabilities...</p>
+          <p className="text-muted-foreground">Loading scans...</p>
         </div>
       ) : (
-        <DataTable data={vulns ?? []} />
+        <DataTable data={scans ?? []} />
       )}
     </div>
   );
 }
 
-const Chip: React.FC<{ label: string }> = ({ label }) => {
-  return (
-    <span className="m-1 inline-flex items-center rounded-full bg-gray-800 px-2 py-1 text-sm font-medium text-white">
-      {label}
-    </span>
-  );
-};
-
-const columns: ColumnDef<Vulnerability>[] = [
+const columns: ColumnDef<Scan>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -112,6 +102,7 @@ const columns: ColumnDef<Vulnerability>[] = [
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        className="m-2"
       />
     ),
     cell: ({ row }) => (
@@ -119,59 +110,34 @@ const columns: ColumnDef<Vulnerability>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
+        className="m-2"
       />
     ),
     enableSorting: false,
     enableHiding: false,
   },
   {
-    accessorKey: "vulnerability",
-    header: "Vulnerability",
-    cell: ({ row }) => <div>{row.getValue("vulnerability")}</div>,
+    accessorKey: "scanDate",
+    header: "Scan Date",
+    cell: ({ row }) => <div>{row.getValue("scanDate")}</div>,
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "scannerName",
+    header: "Scanner Name",
     cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
+      <div className="font-semibold capitalize">{row.getValue("scannerName")}</div>
     ),
   },
   {
-    accessorKey: "severity",
-    header: "Severity",
-    cell: ({ row }) => (
-      <div className="font-semibold capitalize">{row.getValue("severity")}</div>
-    ),
-  },
-  {
-    accessorKey: "cvss",
-    header: "CVSS",
-    cell: ({ row }) => <div>{row.getValue("cvss")}</div>,
-  },
-  {
-    accessorKey: "assetsAffected",
-    header: "Assets Affected",
-    cell: ({ row }) => {
-      const assets: string[] = row.getValue("assetsAffected");
-      return (
-        <div className="flex flex-wrap">
-          {assets.map((asset) => (
-            <Chip key={asset} label={asset} />
-          ))}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "lastSeen",
-    header: "Last Seen",
-    cell: ({ row }) => <div>{row.getValue("lastSeen")}</div>,
+    accessorKey: "scannedBy",
+    header: "Launched By",
+    cell: ({ row }) => <div>{row.getValue("scannedBy")}</div>,
   },
   {
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const vulnerability = row.original;
+      const scan = row.original;
 
       return (
         <DropdownMenu>
@@ -184,13 +150,13 @@ const columns: ColumnDef<Vulnerability>[] = [
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(vulnerability.id)}
+              onClick={() => navigator.clipboard.writeText(scan.id)}
             >
-              Copy Vulnerability ID
+              Copy Asset ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
+            <DropdownMenuItem>Manage Asset</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -198,8 +164,7 @@ const columns: ColumnDef<Vulnerability>[] = [
   },
 ];
 
-
-function DataTable({ data }: { data: Vulnerability[] }) {
+function DataTable({ data }: { data: Scan[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -207,6 +172,8 @@ function DataTable({ data }: { data: Vulnerability[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [open, setOpen] = React.useState<boolean>(false);
+  const { toast } = useToast();
 
   const table = useReactTable({
     data,
@@ -227,17 +194,66 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     },
   });
 
+  async function launchScans() {
+    try {
+      const response = await apiFetch("/scan/launch", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Failed to launch scans");
+      }
+      const data = await response.json();
+      toast({
+        title: "Scan Successfully Launched!",
+        description: data?.message,
+      });
+      window.location.reload();
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "An error occurred while fetching roles"
+
+      toast({
+        variant: "destructive",
+        title: "Launch Scan Failed",
+        description: errorMessage,
+      });
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h1 className="mt-12 text-2xl font-bold">Vulnerabilitiy & Scan</h1>
-      <div className="mt-2 flex items-center justify-center py-4">
+      <h1 className="mt-12 text-2xl font-bold">Scans</h1>
+      <div className="flex justify-end -mt-8">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setOpen(true)}>Start New Scan</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Start Scan</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to start scans on <strong>all assets</strong>? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit"
+                onClick={async () => {
+                  setOpen(false);
+                  await launchScans();
+                }}
+              >Start Scan</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="flex items-center justify-center py-4">
         <Input
-          placeholder="Filter vulnerabilities..."
+          placeholder="Filter assets..."
           value={
-            (table.getColumn("vulnerability")?.getFilterValue() as string) ?? ""
+            (table.getColumn("scannerName")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("vulnerability")?.setFilterValue(event.target.value)
+            table.getColumn("scannerName")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -254,7 +270,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="capitalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 >
@@ -305,7 +320,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No vulnerabilities found.
+                  No scans found.
                 </TableCell>
               </TableRow>
             )}
@@ -336,8 +351,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
           </Button>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
-
-

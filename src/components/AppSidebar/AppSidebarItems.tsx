@@ -31,6 +31,12 @@ export const items = [
     tooltip: ""
   },
   {
+    title: "Scans",
+    url: "/dashboard/scans",
+    icon: Blocks,
+    tooltip: ""
+  },
+  {
     title: "Environments",
     url: "/dashboard/environments",
     icon: Container,
@@ -46,12 +52,6 @@ export const items = [
     title: "Snapshots",
     url: "/dashboard/snapshots",
     icon: CircleFadingPlus,
-    tooltip: ""
-  },
-  {
-    title: "Plugins",
-    url: "/dashboard/plugins",
-    icon: Blocks,
     tooltip: ""
   },
   {
