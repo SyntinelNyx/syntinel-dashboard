@@ -201,15 +201,17 @@ function DataTable({ data }: { data: Scan[] }) {
         throw new Error("Failed to launch scans");
       }
       const data = await response.json();
-      toast({
+
+      localStorage.setItem("scanSuccess", JSON.stringify({
         title: "Scan Successfully Launched!",
-        description: data?.message,
-      });
+        description: data?.message || ""
+      }));
+
       window.location.reload();
     } catch (error) {
       const errorMessage = error instanceof Error
         ? error.message
-        : "An error occurred while fetching roles"
+        : "An error occurred while fetching roles";
 
       toast({
         variant: "destructive",
@@ -218,6 +220,16 @@ function DataTable({ data }: { data: Scan[] }) {
       });
     }
   }
+
+  useEffect(() => {
+    const toastData = localStorage.getItem("scanSuccess");
+    if (toastData) {
+      const { title, description } = JSON.parse(toastData);
+      toast({ title, description });
+      localStorage.removeItem("scanSuccess");
+    }
+  }, []);
+
 
   return (
     <div className="mx-auto w-full max-w-4xl">
