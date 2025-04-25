@@ -201,14 +201,19 @@ function DataTable({ data }: { data: Scan[] }) {
   async function launchScans() {
     try {
       const response = await apiFetch("/scan/launch", { method: "POST" });
+      toast({
+        title: "Scan Launched!",
+        description: "Please wait for the scan to finish.",
+      });
+
       if (!response.ok) {
         throw new Error("Failed to launch scans");
       }
       const data = await response.json();
 
       localStorage.setItem("scanSuccess", JSON.stringify({
-        title: "Scan Successfully Launched!",
-        description: data?.message || ""
+        title: "Scan Finished Successfully!",
+        description: "Finished scanning all assets",
       }));
 
       window.location.reload();

@@ -233,7 +233,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h1 className="mt-12 text-2xl font-bold">Vulnerabilitiy & Scan</h1>
+      <h1 className="mt-12 text-2xl font-bold">Vulnerability</h1>
       <div className="mt-2 flex items-center justify-center py-4">
         <Input
           placeholder="Filter vulnerabilities..."
