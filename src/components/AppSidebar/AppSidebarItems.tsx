@@ -22,37 +22,37 @@ export const items = [
     title: "Assets",
     url: "/dashboard/assets",
     icon: HardDrive,
-    tooltip: ""
+    tooltip: "List of all assets"
   },
   {
     title: "Vulnerabilities",
     url: "/dashboard/vulnerabilities",
     icon: Bug,
-    tooltip: ""
+    tooltip: "List of vulnerabilities on the assets"
   },
   {
     title: "Scans",
     url: "/dashboard/scans",
     icon: Blocks,
-    tooltip: ""
+    tooltip: "List of scans performed for the assets"
   },
   {
     title: "Environments",
     url: "/dashboard/environments",
     icon: Container,
-    tooltip: ""
+    tooltip: "Environment orchestration for assets"
   },
   {
     title: "Actions",
     url: "/dashboard/actions",
     icon: ChevronsLeftRightEllipsis,
-    tooltip: ""
+    tooltip: "Actions for patching/deployments"
   },
   {
     title: "Snapshots",
     url: "/dashboard/snapshots",
     icon: CircleFadingPlus,
-    tooltip: ""
+    tooltip: "List of snapshots from the assets"
   },
   {
     title: "Settings",
@@ -63,13 +63,13 @@ export const items = [
         title: "User Management",
         url: "/dashboard/settings/management",
         icon: UsersRound,
-        tooltip: ""
+        tooltip: "Manage IAM user for the root account"
       },
       {
         title: "Role Management",
         url: "/dashboard/settings/role-management",
         icon: Shield,
-        tooltip: ""
+        tooltip: "Manage roles for the root account"
       },
     ],
   },
