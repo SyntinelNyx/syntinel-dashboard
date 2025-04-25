@@ -26,7 +26,7 @@ type Chart = {
 }
 
 const chartData: Chart[] = [
-  { date: "2025-4-23", staging: 0, production: 0 },
+  { date: "2025-4-23", staging: 57, production: 0 },
 ];
 
 const chartConfig = {
