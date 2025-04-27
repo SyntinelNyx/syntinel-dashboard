@@ -84,6 +84,24 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     return new Date(dateString).toLocaleString();
   };
 
+  // Function to format size
+  const formatSize = (sizeInBytes: string | number) => {
+    const bytes = typeof sizeInBytes === 'string' ? parseInt(sizeInBytes, 10) : sizeInBytes;
+    
+    if (isNaN(bytes)) return 'Unknown size';
+    
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    } else if (bytes < 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    } else {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+  };
+
+
 
   return (
     <div className="p-4">
@@ -115,7 +133,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
                 <TableRow key={snapshot.id}>
                   <TableCell>{snapshot.id}</TableCell>
                   <TableCell>{formatDate(snapshot.endTime)}</TableCell>
-                  <TableCell>{snapshot.size}</TableCell>
+                  <TableCell>{formatSize(snapshot.size)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
