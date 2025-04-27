@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 
@@ -18,7 +18,6 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -50,6 +49,8 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+import { Chip } from "@/components/Chip";
+import { AssetsAffectedCell } from "@/components/AssetsAffectedCell"
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
@@ -159,20 +160,7 @@ export default function VulnsPage() {
   );
 }
 
-type ChipProps = React.HTMLAttributes<HTMLSpanElement> & {
-  label: string;
-};
 
-const Chip: React.FC<ChipProps> = ({ label, className, ...props }) => {
-  return (
-    <span
-      className={`m-1 inline-flex items-center rounded-full bg-muted px-2 py-1 text-sm font-semibold text-muted-foreground ${className ?? ""}`}
-      {...props}
-    >
-      {label}
-    </span>
-  );
-};
 
 const columnLabels: Record<string, string> = {
   severity: "Severity",
@@ -334,86 +322,8 @@ const columns: ColumnDef<Vulnerability>[] = [
     accessorKey: "assetsAffected",
     header: "Assets Affected",
     cell: ({ row }) => {
-      const assets: assetsAffected[] = row.getValue("assetsAffected");
-
-      const containerRef = useRef<HTMLDivElement>(null);
-      const [maxVisible, setMaxVisible] = useState(assets.length);
-      const [open, setOpen] = useState(false);
-
-      useEffect(() => {
-        if (!containerRef.current) return;
-
-        const container = containerRef.current;
-        const resizeObserver = new ResizeObserver(() => {
-          let availableWidth = container.clientWidth;
-          let usedWidth = 0;
-          let count = 0;
-
-          for (const asset of assets) {
-            const approxWidth = asset.hostname.length * 8 + 32;
-            if (usedWidth + approxWidth < availableWidth) {
-              usedWidth += approxWidth + 8;
-              count++;
-            } else {
-              break;
-            }
-          }
-
-          setMaxVisible(Math.max(1, count - 1));
-        });
-
-        resizeObserver.observe(container);
-
-        return () => {
-          resizeObserver.disconnect();
-        };
-      }, [assets]);
-
-      const visibleAssets = assets.slice(0, maxVisible);
-      const hiddenAssets = assets.slice(maxVisible);
-
-      const router = useRouter();
-      return (
-        <>
-          <div ref={containerRef} className="flex flex-wrap items-center gap-2 overflow-hidden">
-            {visibleAssets.map((asset) => (
-              <Chip
-                key={asset.hostname}
-                label={asset.hostname}
-                onClick={() => router.push(`/dashboard/assets/view/${asset.assetUUID}`)}
-                className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
-              />
-            ))}
-
-            {hiddenAssets.length > 0 && (
-              <Chip
-                label={`+${hiddenAssets.length} more`}
-                onClick={() => setOpen(true)}
-                className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center font-bold gap-1"
-              />
-            )}
-          </div>
-
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Assets Affected</DialogTitle>
-              </DialogHeader>
-
-              <div className="flex flex-wrap gap-2 mt-4">
-                {assets.map((asset) => (
-                  <Chip
-                    key={asset.hostname}
-                    label={asset.hostname}
-                    onClick={() => router.push(`/dashboard/assets/view/${asset.assetUUID}`)}
-                    className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
-                  />
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
-        </>
-      );
+      const assets = row.getValue("assetsAffected") as assetsAffected[];
+      return <AssetsAffectedCell assets={assets} />;
     },
   },
   {
