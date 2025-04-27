@@ -73,9 +73,6 @@ export function AppSidebarFooter() {
               >
                 <span>Account</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <span>Billing</span>
-              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleSignOut}
                 className="cursor-pointer"

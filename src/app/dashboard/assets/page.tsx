@@ -87,6 +87,15 @@ export default function AssetsPage() {
   );
 }
 
+const columnLabels: Record<string, string> = {
+  hostname: "Host Name",
+  os: "OS",
+  ipAddress: "IP Address",
+  platformVersion: "Platform Version",
+  createdAt: "Time of Enrollment",
+};
+
+
 const columns: ColumnDef<Asset>[] = [
   {
     id: "select",
@@ -207,7 +216,7 @@ function DataTable({ data }: { data: Asset[] }) {
       <h1 className="mt-12 text-2xl font-bold">Asset Management</h1>
       <div className="flex items-center justify-center py-4">
         <Input
-          placeholder="Filter assets..."
+          placeholder="Filter assets by host name..."
           value={
             (table.getColumn("hostname")?.getFilterValue() as string) ?? ""
           }
@@ -231,8 +240,9 @@ function DataTable({ data }: { data: Asset[] }) {
                   key={column.id}
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onSelect={(e) => e.preventDefault()} // <- ADD THIS LINE
                 >
-                  {column.id}
+                  {columnLabels[column.id] ?? column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
