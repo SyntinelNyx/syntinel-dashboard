@@ -96,7 +96,6 @@ const columnLabels: Record<string, string> = {
   createdAt: "Time of Enrollment",
 };
 
-
 const columns: ColumnDef<Asset>[] = [
   {
     id: "select",

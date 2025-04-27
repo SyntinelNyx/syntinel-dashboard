@@ -91,6 +91,12 @@ export default function ScanPage() {
   );
 }
 
+const columnLabels: Record<string, string> = {
+  scanDate: "Scan Date",
+  scannerName: "Scanner Name",
+  scannedBy: "Scanned By",
+};
+
 const columns: ColumnDef<Scan>[] = [
   {
     id: "select",
@@ -102,7 +108,6 @@ const columns: ColumnDef<Scan>[] = [
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
-        className="m-2"
       />
     ),
     cell: ({ row }) => (
@@ -110,7 +115,6 @@ const columns: ColumnDef<Scan>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
-        className="m-2"
       />
     ),
     enableSorting: false,
@@ -200,16 +204,15 @@ function DataTable({ data }: { data: Scan[] }) {
 
   async function launchScans() {
     try {
-      const response = await apiFetch("/scan/launch", { method: "POST" });
       toast({
         title: "Scan Launched!",
         description: "Please wait for the scan to finish.",
       });
 
+      const response = await apiFetch("/scan/launch", { method: "POST" });
       if (!response.ok) {
         throw new Error("Failed to launch scans");
       }
-      const data = await response.json();
 
       localStorage.setItem("scanSuccess", JSON.stringify({
         title: "Scan Finished Successfully!",
@@ -293,8 +296,9 @@ function DataTable({ data }: { data: Scan[] }) {
                   key={column.id}
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onSelect={(e) => e.preventDefault()}
                 >
-                  {column.id}
+                  {columnLabels[column.id] ?? column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -306,13 +310,15 @@ function DataTable({ data }: { data: Scan[] }) {
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                  <TableHead key={header.id} className="text-center">
+                    {header.isPlaceholder ? null : (
+                      <div className="flex items-center p-2">
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -326,11 +332,13 @@ function DataTable({ data }: { data: Scan[] }) {
                   data-state={row.getIsSelected() && "selected"}
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
+                    <TableCell key={cell.id} className="text-center">
+                      <div className="flex items-center px-2">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </div>
                     </TableCell>
                   ))}
                 </TableRow>
