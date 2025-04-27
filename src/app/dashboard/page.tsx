@@ -17,7 +17,7 @@ export default function OverviewPage() {
       toast({ title, description });
       localStorage.removeItem("postAuthToast");
     }
-  }, []);
+  }, [toast]);
 
   return (
     <div className="flex w-full flex-col items-center justify-center space-y-3 p-12">

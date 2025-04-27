@@ -30,47 +30,46 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    fetchSnapshots();
-  }, [slug]);
 
-  const fetchSnapshots = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch snapshots: ${response.status}`);
+
+
+  useEffect(() => {
+    const fetchSnapshots = async () => {
+      try {
+        setIsLoading(true);
+        const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch snapshots: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setSnapshots(data);
+      } catch (error) {
+        console.error('Error fetching snapshots:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load snapshots",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      
-      const data = await response.json();
-      setSnapshots(data);
-    } catch (error) {
-      console.error('Error fetching snapshots:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load snapshots",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+
+    fetchSnapshots();
+  }, [slug, toast]);
 
   const handleCreateSnapshot = async () => {
     try {
       setIsCreatingSnapshot(true);
       // This is where you would make an API call to create a snapshot
       await apiFetch(`/assets/create-snapshots/${slug}`, { method: 'POST' });
-      
+
       toast({
         title: "Success",
         description: "Snapshot created successfully",
       });
-      
-      // Refresh the snapshots list
-      fetchSnapshots();
     } catch (error) {
       console.error('Error creating snapshot:', error);
       toast({
@@ -91,23 +90,23 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   // Calculate duration between start and end time
   const calculateDuration = (startTime: string, endTime: string) => {
     if (!startTime || !endTime) return "N/A";
-    
+
     const start = new Date(startTime).getTime();
     const end = new Date(endTime).getTime();
-    
+
     if (isNaN(start) || isNaN(end)) return "Invalid time";
-    
+
     const durationMs = end - start;
     if (durationMs < 0) return "Invalid duration";
-    
+
     // Format duration in a human-readable way
     const seconds = Math.floor(durationMs / 1000);
     if (seconds < 60) return `${seconds}s`;
-    
+
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
-    
+
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
@@ -116,18 +115,18 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
-  
+
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Snapshots</h2>
-          <Button 
-            onClick={handleCreateSnapshot} 
+          <Button
+            onClick={handleCreateSnapshot}
             disabled={isCreatingSnapshot}
           >
             {isCreatingSnapshot ? 'Creating...' : 'Create Snapshot'}
           </Button>
         </div>
-        
+
         {isLoading ? (
           <p>Loading snapshots...</p>
         ) : (

@@ -88,101 +88,9 @@ export default function AssetsPage() {
   );
 }
 
-const columnLabels: Record<string, string> = {
-  hostname: "Host Name",
-  os: "OS",
-  ipAddress: "IP Address",
-  platformVersion: "Platform Version",
-  createdAt: "Time of Enrollment",
-};
-
-const columns: ColumnDef<Asset>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "hostname",
-    header: "Host Name",
-    cell: ({ row }) => <div>{row.getValue("hostname")}</div>,
-  },
-  {
-    accessorKey: "os",
-    header: "OS",
-    cell: ({ row }) => (
-      <div className="font-semibold capitalize">{row.getValue("os")}</div>
-    ),
-  },
-  {
-    accessorKey: "platformVersion",
-    header: "Platform Version",
-    cell: ({ row }) => <div>{row.getValue("platformVersion")}</div>,
-  },
-  {
-    accessorKey: "ipAddress",
-    header: "IP Address",
-    cell: ({ row }) => <div>{row.getValue("ipAddress")}</div>,
-  },
-  {
-    accessorKey: "createdAt",
-    header: "Time of Enrollment",
-    cell: ({ row }) => {
-      const raw = row.getValue("createdAt");
-      const date = new Date(raw as string);
-      return <div>{date.toLocaleString()}</div>;
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const asset = row.original;
-      const router = useRouter();
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(asset.assetId)}
-            >
-              Copy Asset ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/view/${asset.assetId}`)}>View Details</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/manage/${asset.assetId}`)}>Manage Asset</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
 
 function DataTable({ data }: { data: Asset[] }) {
+  const router = useRouter();
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -190,6 +98,99 @@ function DataTable({ data }: { data: Asset[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const columnLabels: Record<string, string> = {
+    hostname: "Host Name",
+    os: "OS",
+    ipAddress: "IP Address",
+    platformVersion: "Platform Version",
+    createdAt: "Time of Enrollment",
+  };
+
+  const columns: ColumnDef<Asset>[] = [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "hostname",
+      header: "Host Name",
+      cell: ({ row }) => <div>{row.getValue("hostname")}</div>,
+    },
+    {
+      accessorKey: "os",
+      header: "OS",
+      cell: ({ row }) => (
+        <div className="font-semibold capitalize">{row.getValue("os")}</div>
+      ),
+    },
+    {
+      accessorKey: "platformVersion",
+      header: "Platform Version",
+      cell: ({ row }) => <div>{row.getValue("platformVersion")}</div>,
+    },
+    {
+      accessorKey: "ipAddress",
+      header: "IP Address",
+      cell: ({ row }) => <div>{row.getValue("ipAddress")}</div>,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Time of Enrollment",
+      cell: ({ row }) => {
+        const raw = row.getValue("createdAt");
+        const date = new Date(raw as string);
+        return <div>{date.toLocaleString()}</div>;
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const asset = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <DotsHorizontalIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(asset.assetId)}
+              >
+                Copy Asset ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/view/${asset.assetId}`)}>View Details</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/manage/${asset.assetId}`)}>Manage Asset</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
 
   const table = useReactTable({
     data,

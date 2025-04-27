@@ -1,11 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+// import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import { apiFetch } from "@/lib/api-fetch";
-import { useToast } from "@/hooks/use-toast";
+// import { apiFetch } from "@/lib/api-fetch";
+// import { useToast } from "@/hooks/use-toast";
 
 export type AssetDetails = {
   assetId: string;
@@ -40,7 +40,7 @@ export type AssetDetails = {
 
 export default function AssetPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  const { toast } = useToast();
+  // const { toast } = useToast();
   const asset = fakeAsset;
 
   // const [asset, setAsset] = useState<AssetDetails | null>(null);

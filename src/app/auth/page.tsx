@@ -20,7 +20,7 @@ export default function AuthPage() {
       console.log(title, description)
       localStorage.removeItem("postAuthToast");
     }
-  }, []);
+  }, [toast]);
 
   return (
     <main className="flex h-screen justify-center font-[family-name:var(--font-geist-sans)] md:justify-start">

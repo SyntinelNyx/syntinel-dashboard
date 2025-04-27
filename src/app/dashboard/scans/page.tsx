@@ -240,7 +240,7 @@ function DataTable({ data }: { data: Scan[] }) {
       toast({ title, description });
       localStorage.removeItem("scanSuccess");
     }
-  }, []);
+  }, [toast]);
 
 
   return (
