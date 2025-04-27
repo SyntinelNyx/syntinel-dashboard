@@ -1,7 +1,6 @@
 "use client";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -36,30 +35,30 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
-type Asset = {
-  assetId: string;
-  hostname: string;
-  os: string;
-  platformVersion: string;
-  ipAddress: string;
-  createdAt: string;
+type Scan = {
+  id: string;
+  scanDate: string;
+  scannerName: string;
+  scannedBy: string;
 };
 
-export default function AssetsPage() {
+export default function ScanPage() {
   const { toast } = useToast();
-  const [assets, setAssets] = useState<Asset[]>([]);
+  const [scans, setScans] = useState<Scan[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    async function fetchAssets() {
+    async function fetchScans() {
       try {
-        const res = await apiFetch("/assets");
+        const res = await apiFetch("/scan/retrieve");
         const json = await res.json();
 
-        setAssets(json);
+        setScans(json);
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -68,29 +67,112 @@ export default function AssetsPage() {
 
         toast({
           variant: "destructive",
-          title: "Asset Fetch Failed",
+          title: "Scans Fetch Failed",
           description: errorMessage,
         });
+      } finally {
+        setLoading(false);
       }
     }
 
-    fetchAssets();
+    fetchScans();
   }, [toast]);
 
   return (
     <div className="container w-full">
-      {assets?.length === 0 ? (
-        <div className="flex h-full mt-12 justify-center items-center text-gray-500">Loading assets...</div>
+      {loading ? (
+        <div className="flex items-center justify-center h-full mt-12">
+          <p className="text-muted-foreground">Loading scans...</p>
+        </div>
       ) : (
-        <DataTable data={assets ?? []} />
+        <DataTable data={scans ?? []} />
       )}
     </div>
   );
 }
 
+const columnLabels: Record<string, string> = {
+  scanDate: "Scan Date",
+  scannerName: "Scanner Name",
+  scannedBy: "Scanned By",
+};
 
-function DataTable({ data }: { data: Asset[] }) {
-  const router = useRouter();
+const columns: ColumnDef<Scan>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "scanDate",
+    header: "Scan Date",
+    cell: ({ row }) => {
+      const raw = row.getValue("scanDate");
+      const date = new Date(raw as string);
+      return <div>{date.toLocaleString()}</div>
+    },
+  },
+  {
+    accessorKey: "scannerName",
+    header: "Scanner Name",
+    cell: ({ row }) => (
+      <div className="font-semibold capitalize">{row.getValue("scannerName")}</div>
+    ),
+  },
+  {
+    accessorKey: "scannedBy",
+    header: "Launched By",
+    cell: ({ row }) => <div>{row.getValue("scannedBy")}</div>,
+  },
+  {
+    id: "actions",
+    enableHiding: false,
+    cell: ({ row }) => {
+      const scan = row.original;
+
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <DotsHorizontalIcon className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem
+              onClick={() => navigator.clipboard.writeText(scan.id)}
+            >
+              Copy Asset ID
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>View Details</DropdownMenuItem>
+            <DropdownMenuItem>Manage Asset</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  },
+];
+
+function DataTable({ data }: { data: Scan[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -98,99 +180,8 @@ function DataTable({ data }: { data: Asset[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
-  const columnLabels: Record<string, string> = {
-    hostname: "Host Name",
-    os: "OS",
-    ipAddress: "IP Address",
-    platformVersion: "Platform Version",
-    createdAt: "Time of Enrollment",
-  };
-
-  const columns: ColumnDef<Asset>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      accessorKey: "hostname",
-      header: "Host Name",
-      cell: ({ row }) => <div>{row.getValue("hostname")}</div>,
-    },
-    {
-      accessorKey: "os",
-      header: "OS",
-      cell: ({ row }) => (
-        <div className="font-semibold capitalize">{row.getValue("os")}</div>
-      ),
-    },
-    {
-      accessorKey: "platformVersion",
-      header: "Platform Version",
-      cell: ({ row }) => <div>{row.getValue("platformVersion")}</div>,
-    },
-    {
-      accessorKey: "ipAddress",
-      header: "IP Address",
-      cell: ({ row }) => <div>{row.getValue("ipAddress")}</div>,
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Time of Enrollment",
-      cell: ({ row }) => {
-        const raw = row.getValue("createdAt");
-        const date = new Date(raw as string);
-        return <div>{date.toLocaleString()}</div>;
-      },
-    },
-    {
-      id: "actions",
-      enableHiding: false,
-      cell: ({ row }) => {
-        const asset = row.original;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <DotsHorizontalIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(asset.assetId)}
-              >
-                Copy Asset ID
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/view/${asset.assetId}`)}>View Details</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/dashboard/assets/manage/${asset.assetId}`)}>Manage Asset</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
+  const [open, setOpen] = React.useState<boolean>(false);
+  const { toast } = useToast();
 
   const table = useReactTable({
     data,
@@ -211,17 +202,82 @@ function DataTable({ data }: { data: Asset[] }) {
     },
   });
 
+  async function launchScans() {
+    try {
+      toast({
+        title: "Scan Launched!",
+        description: "Please wait for the scan to finish.",
+      });
+
+      const response = await apiFetch("/scan/launch", { method: "POST" });
+      if (!response.ok) {
+        throw new Error("Failed to launch scans");
+      }
+
+      localStorage.setItem("scanSuccess", JSON.stringify({
+        title: "Scan Finished Successfully!",
+        description: "Finished scanning all assets",
+      }));
+
+      window.location.reload();
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "An error occurred while fetching roles";
+
+      toast({
+        variant: "destructive",
+        title: "Launch Scan Failed",
+        description: errorMessage,
+      });
+    }
+  }
+
+  useEffect(() => {
+    const toastData = localStorage.getItem("scanSuccess");
+    if (toastData) {
+      const { title, description } = JSON.parse(toastData);
+      toast({ title, description });
+      localStorage.removeItem("scanSuccess");
+    }
+  }, [toast]);
+
+
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h1 className="mt-12 text-2xl font-bold">Asset Management</h1>
+      <h1 className="mt-12 text-2xl font-bold">Scans</h1>
+      <div className="flex justify-end -mt-8">
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setOpen(true)}>Start New Scan</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Start Scan</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to start scans on <strong>all assets</strong>? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit"
+                onClick={async () => {
+                  setOpen(false);
+                  await launchScans();
+                }}
+              >Start Scan</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
       <div className="flex items-center justify-center py-4">
         <Input
-          placeholder="Filter assets by host name..."
+          placeholder="Filter assets..."
           value={
-            (table.getColumn("hostname")?.getFilterValue() as string) ?? ""
+            (table.getColumn("scannerName")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("hostname")?.setFilterValue(event.target.value)
+            table.getColumn("scannerName")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -293,7 +349,7 @@ function DataTable({ data }: { data: Asset[] }) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No assets found.
+                  No scans found.
                 </TableCell>
               </TableRow>
             )}

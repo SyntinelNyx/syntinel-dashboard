@@ -28,18 +28,15 @@ export function AppSidebarFooter() {
       });
 
       if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Logout Failed",
-          description: await response.json(),
-        });
-        return;
+        const errorJson = await response.json();
+        throw new Error(errorJson.message || "Failed to logout")
       }
 
-      toast({
+      localStorage.setItem("postAuthToast", JSON.stringify({
         title: "Logout Successful",
-        description: "Successfully Logged Out",
-      });
+        description: "Successfully Logged Out"
+      }));
+
       router.push("/auth");
     } catch (error) {
       const errorMessage =
@@ -62,7 +59,7 @@ export function AppSidebarFooter() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton>
-                <User2 /> {"Username"}
+                <User2 /> {"demouser"}
                 <ChevronUp className="ml-auto" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
@@ -75,9 +72,6 @@ export function AppSidebarFooter() {
                 className="cursor-pointer"
               >
                 <span>Account</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer">
-                <span>Billing</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={handleSignOut}

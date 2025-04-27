@@ -74,18 +74,15 @@ export const LoginForm = () => {
       });
 
       if (!response.ok) {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: await response.json(),
-        });
-        return;
+        const errorJson = await response.json();
+        throw new Error(errorJson.message || "Failed To Login")
       }
 
-      toast({
+      localStorage.setItem("postAuthToast", JSON.stringify({
         title: "Login Successful",
-        description: "Successfully Logged In",
-      });
+        description: "Successfully Logged In"
+      }));
+
       router.push("/dashboard");
     } catch (error) {
       const errorMessage =

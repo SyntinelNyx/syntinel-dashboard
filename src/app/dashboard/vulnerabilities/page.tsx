@@ -1,6 +1,9 @@
 "use client";
 import * as React from "react";
+import { useState, useEffect } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
+
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -15,7 +18,6 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,350 +37,114 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-const data: Vulnerability[] = [
-  {
-    id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
-    status: "active",
-    vulnerability: "CVE-2024-10001",
-    severity: "Critical",
-    cvss: 9.8,
-    assets_affected: [1001, 1002, 1003],
-    last_seen: "November 1st, 2024",
-  },
-  {
-    id: "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
-    status: "resurfaced",
-    vulnerability: "CVE-2024-10002",
-    severity: "High",
-    cvss: 7.5,
-    assets_affected: [2001, 2002, 2003, 2004],
-    last_seen: "October 25th, 2024",
-  },
-  {
-    id: "3c4d5e6f-7g8h-9i0j-k1l2-m3n4o5p6q7r8",
-    status: "resolved",
-    vulnerability: "CVE-2024-10003",
-    severity: "Medium",
-    cvss: 5.3,
-    assets_affected: [3001],
-    last_seen: "September 15th, 2024",
-  },
-  {
-    id: "4d5e6f7g-8h9i-0j1k-l2m3-n4o5p6q7r8s9",
-    status: "active",
-    vulnerability: "CVE-2024-10004",
-    severity: "Low",
-    cvss: 3.4,
-    assets_affected: [4001, 4002],
-    last_seen: "November 2nd, 2024",
-  },
-  {
-    id: "5e6f7g8h-9i0j-k1l2-m3n4-o5p6q7r8s9t0",
-    status: "resolved",
-    vulnerability: "CVE-2024-10005",
-    severity: "Critical",
-    cvss: 9.0,
-    assets_affected: [5001, 5002, 5003, 5004],
-    last_seen: "August 30th, 2024",
-  },
-  {
-    id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
-    status: "active",
-    vulnerability: "CVE-2024-10001",
-    severity: "Critical",
-    cvss: 9.8,
-    assets_affected: [1001, 1002, 1003],
-    last_seen: "November 1st, 2024",
-  },
-  {
-    id: "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
-    status: "resurfaced",
-    vulnerability: "CVE-2024-10002",
-    severity: "High",
-    cvss: 7.5,
-    assets_affected: [2001, 2002, 2003, 2004],
-    last_seen: "October 25th, 2024",
-  },
-  {
-    id: "3c4d5e6f-7g8h-9i0j-k1l2-m3n4o5p6q7r8",
-    status: "resolved",
-    vulnerability: "CVE-2024-10003",
-    severity: "Medium",
-    cvss: 5.3,
-    assets_affected: [3001],
-    last_seen: "September 15th, 2024",
-  },
-  {
-    id: "4d5e6f7g-8h9i-0j1k-l2m3-n4o5p6q7r8s9",
-    status: "active",
-    vulnerability: "CVE-2024-10004",
-    severity: "Low",
-    cvss: 3.4,
-    assets_affected: [4001, 4002],
-    last_seen: "November 2nd, 2024",
-  },
-  {
-    id: "5e6f7g8h-9i0j-k1l2-m3n4-o5p6q7r8s9t0",
-    status: "resolved",
-    vulnerability: "CVE-2024-10005",
-    severity: "Critical",
-    cvss: 9.0,
-    assets_affected: [5001, 5002, 5003, 5004],
-    last_seen: "August 30th, 2024",
-  },
-  {
-    id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
-    status: "active",
-    vulnerability: "CVE-2024-10001",
-    severity: "Critical",
-    cvss: 9.8,
-    assets_affected: [1001, 1002, 1003],
-    last_seen: "November 1st, 2024",
-  },
-  {
-    id: "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
-    status: "resurfaced",
-    vulnerability: "CVE-2024-10002",
-    severity: "High",
-    cvss: 7.5,
-    assets_affected: [2001, 2002, 2003, 2004],
-    last_seen: "October 25th, 2024",
-  },
-  {
-    id: "3c4d5e6f-7g8h-9i0j-k1l2-m3n4o5p6q7r8",
-    status: "resolved",
-    vulnerability: "CVE-2024-10003",
-    severity: "Medium",
-    cvss: 5.3,
-    assets_affected: [3001],
-    last_seen: "September 15th, 2024",
-  },
-  {
-    id: "4d5e6f7g-8h9i-0j1k-l2m3-n4o5p6q7r8s9",
-    status: "active",
-    vulnerability: "CVE-2024-10004",
-    severity: "Low",
-    cvss: 3.4,
-    assets_affected: [4001, 4002],
-    last_seen: "November 2nd, 2024",
-  },
-  {
-    id: "5e6f7g8h-9i0j-k1l2-m3n4-o5p6q7r8s9t0",
-    status: "resolved",
-    vulnerability: "CVE-2024-10005",
-    severity: "Critical",
-    cvss: 9.0,
-    assets_affected: [5001, 5002, 5003, 5004],
-    last_seen: "August 30th, 2024",
-  },
-  {
-    id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
-    status: "active",
-    vulnerability: "CVE-2024-10001",
-    severity: "Critical",
-    cvss: 9.8,
-    assets_affected: [1001, 1002, 1003],
-    last_seen: "November 1st, 2024",
-  },
-  {
-    id: "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
-    status: "resurfaced",
-    vulnerability: "CVE-2024-10002",
-    severity: "High",
-    cvss: 7.5,
-    assets_affected: [2001, 2002, 2003, 2004],
-    last_seen: "October 25th, 2024",
-  },
-  {
-    id: "3c4d5e6f-7g8h-9i0j-k1l2-m3n4o5p6q7r8",
-    status: "resolved",
-    vulnerability: "CVE-2024-10003",
-    severity: "Medium",
-    cvss: 5.3,
-    assets_affected: [3001],
-    last_seen: "September 15th, 2024",
-  },
-  {
-    id: "4d5e6f7g-8h9i-0j1k-l2m3-n4o5p6q7r8s9",
-    status: "active",
-    vulnerability: "CVE-2024-10004",
-    severity: "Low",
-    cvss: 3.4,
-    assets_affected: [4001, 4002],
-    last_seen: "November 2nd, 2024",
-  },
-  {
-    id: "5e6f7g8h-9i0j-k1l2-m3n4-o5p6q7r8s9t0",
-    status: "resolved",
-    vulnerability: "CVE-2024-10005",
-    severity: "Critical",
-    cvss: 9.0,
-    assets_affected: [5001, 5002, 5003, 5004],
-    last_seen: "August 30th, 2024",
-  },
-  {
-    id: "1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6",
-    status: "active",
-    vulnerability: "CVE-2024-10001",
-    severity: "Critical",
-    cvss: 9.8,
-    assets_affected: [1001, 1002, 1003],
-    last_seen: "November 1st, 2024",
-  },
-  {
-    id: "2b3c4d5e-6f7g-8h9i-0j1k-l2m3n4o5p6q7",
-    status: "resurfaced",
-    vulnerability: "CVE-2024-10002",
-    severity: "High",
-    cvss: 7.5,
-    assets_affected: [2001, 2002, 2003, 2004],
-    last_seen: "October 25th, 2024",
-  },
-  {
-    id: "3c4d5e6f-7g8h-9i0j-k1l2-m3n4o5p6q7r8",
-    status: "resolved",
-    vulnerability: "CVE-2024-10003",
-    severity: "Medium",
-    cvss: 5.3,
-    assets_affected: [3001],
-    last_seen: "September 15th, 2024",
-  },
-  {
-    id: "4d5e6f7g-8h9i-0j1k-l2m3-n4o5p6q7r8s9",
-    status: "active",
-    vulnerability: "CVE-2024-10004",
-    severity: "Low",
-    cvss: 3.4,
-    assets_affected: [4001, 4002],
-    last_seen: "November 2nd, 2024",
-  },
-  {
-    id: "5e6f7g8h-9i0j-k1l2-m3n4-o5p6q7r8s9t0",
-    status: "resolved",
-    vulnerability: "CVE-2024-10005",
-    severity: "Critical",
-    cvss: 9.0,
-    assets_affected: [5001, 5002, 5003, 5004],
-    last_seen: "August 30th, 2024",
-  },
-];
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { VulnerabilityCell } from "@/components/VulnerabilityCell"
+import { AssetsAffectedCell } from "@/components/AssetsAffectedCell"
+
+import { apiFetch } from "@/lib/api-fetch";
+import { useToast } from "@/hooks/use-toast";
+
+type assetsAffected = {
+  assetUUID: string;
+  hostname: string;
+}
 
 type Vulnerability = {
   id: string;
-  status: "active" | "resurfaced" | "resolved";
+  status: "new" | "active" | "resurfaced" | "resolved";
   vulnerability: string;
   severity: string;
-  cvss: number;
-  assets_affected: number[];
-  last_seen: string;
+  assetsAffected: assetsAffected[];
+  lastSeen: string;
 };
 
-const Chip: React.FC<{ label: string }> = ({ label }) => {
+const severityStyles: Record<string, {
+  bg: string;
+  text: string;
+  icon?: React.ReactNode;
+  iconColor?: string;
+  animate?: string;
+}> = {
+  unknown: {
+    bg: "bg-slate-100 dark:bg-slate-700",
+    text: "text-slate-800 dark:text-slate-200",
+  },
+  low: {
+    bg: "bg-green-400 dark:bg-green-700",
+    text: "text-white",
+    icon: <AlertCircle className="w-5 h-5" />,
+    iconColor: "text-green-500",
+  },
+  medium: {
+    bg: "bg-yellow-400 dark:bg-yellow-600",
+    text: "text-white",
+    icon: <AlertTriangle className="w-5 h-5" />,
+    iconColor: "text-yellow-500",
+  },
+  high: {
+    bg: "bg-orange-400 dark:bg-orange-700",
+    text: "text-white",
+    icon: <AlertOctagon className="w-5 h-5" />,
+    iconColor: "text-orange-500",
+  },
+  critical: {
+    bg: "bg-red-600 dark:bg-red-600",
+    text: "text-white",
+    icon: <AlertOctagon className="w-5 h-5" />,
+    iconColor: "text-red-600",
+    animate: "animate-custom-pulse",
+  },
+};
+
+export default function VulnsPage() {
+  const { toast } = useToast();
+  const [vulns, setVulns] = useState<Vulnerability[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    async function fetchVulns() {
+      try {
+        const res = await apiFetch("/vuln/retrieve");
+        const json = await res.json();
+
+        setVulns(json);
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An Unknown Error Has Occurred";
+
+        toast({
+          variant: "destructive",
+          title: "Vulnerability Fetch Failed",
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchVulns();
+  }, [toast]);
+
   return (
-    <span className="m-1 inline-flex items-center rounded-full bg-gray-800 px-2 py-1 text-sm font-medium text-white">
-      {label}
-    </span>
-  );
-};
-
-const columns: ColumnDef<Vulnerability>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-      />
-    ),
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "vulnerability",
-    header: "Vulnerability",
-    cell: ({ row }) => <div>{row.getValue("vulnerability")}</div>,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("status")}</div>
-    ),
-  },
-  {
-    accessorKey: "severity",
-    header: "Severity",
-    cell: ({ row }) => (
-      <div className="font-semibold capitalize">{row.getValue("severity")}</div>
-    ),
-  },
-  {
-    accessorKey: "cvss",
-    header: "CVSS",
-    cell: ({ row }) => <div>{row.getValue("cvss")}</div>,
-  },
-  {
-    accessorKey: "assets_affected",
-    header: "Assets Affected",
-    cell: ({ row }) => {
-      const assets: number[] = row.getValue("assets_affected") as number[];
-      return (
-        <div className="flex flex-wrap">
-          {assets.map((asset) => (
-            <Chip key={asset} label={asset.toString()} />
-          ))}
+    <div className="container w-full">
+      {loading ? (
+        <div className="mt-12 flex h-full items-center justify-center">
+          <p className="text-muted-foreground">Loading vulnerabilities...</p>
         </div>
-      );
-    },
-  },
-  {
-    accessorKey: "last_seen",
-    header: "Last Seen",
-    cell: ({ row }) => <div>{row.getValue("last_seen")}</div>,
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const vulnerability = row.original;
+      ) : (
+        <DataTable data={vulns ?? []} />
+      )}
+    </div>
+  );
+}
 
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(vulnerability.id)}
-            >
-              Copy Vulnerability ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
-function DataTable() {
+function DataTable({ data }: { data: Vulnerability[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     [],
@@ -386,6 +152,160 @@ function DataTable() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const columnLabels: Record<string, string> = {
+    severity: "Severity",
+    vulnerability: "Vulnerability",
+    status: "Status",
+    assetsAffected: "Assets Affected",
+    lastSeen: "Last Seen",
+  };
+
+  const columns: ColumnDef<Vulnerability>[] = [
+    {
+      accessorKey: "severity",
+      header: "Severity",
+      cell: ({ row }) => {
+        const severity = (row.getValue("severity") as string).toLowerCase();
+        const { bg, text, icon, iconColor, animate } = severityStyles[severity];
+
+        return (
+          <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
+            {icon && (
+              <span
+                className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
+                aria-label={`${severity} severity`}
+              >
+                {icon}
+              </span>
+            )}
+
+            <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
+              {severity}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "vulnerability",
+      header: "Vulnerability",
+      cell: ({ row }) => {
+        const vulnID = row.getValue("vulnerability") as string;
+        return <VulnerabilityCell vulnID={vulnID} />;
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = (row.getValue("status") as string).toLowerCase();
+
+        const statusColors: Record<string, string> = {
+          "new": "bg-blue-500",
+          "active": "bg-amber-500",
+          "resurfaced": "bg-amber-500",
+          "resolved": "bg-green-500",
+        };
+
+        const dotColor = statusColors[status] ?? "bg-slate-400";
+
+        return (
+          <div className="inline-block">
+            <div className="inline-flex items-center gap-2">
+              <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
+
+              <div className="font-semibold capitalize">
+                {status}
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "assetsAffected",
+      header: "Assets Affected",
+      cell: ({ row }) => {
+        const assets = row.getValue("assetsAffected") as assetsAffected[];
+        return <AssetsAffectedCell assets={assets} />;
+      },
+    },
+    {
+      accessorKey: "lastSeen",
+      header: "Last Seen",
+      cell: ({ row }) => {
+        const raw = row.getValue("lastSeen");
+        const date = new Date(raw as string);
+
+        const getRelativeTime = (date: Date) => {
+          const now = new Date();
+          const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+          const units = [
+            { label: 'second', threshold: 60 },
+            { label: 'minute', threshold: 60 },
+            { label: 'hour', threshold: 24 },
+            { label: 'day', threshold: 30 },
+            { label: 'month', threshold: 12 },
+            { label: 'year', threshold: Infinity }
+          ];
+
+          let value = diffInSeconds;
+          for (let i = 0; i < units.length; i++) {
+            const unit = units[i];
+
+            if (value < unit.threshold) {
+              return `${Math.floor(value)} ${unit.label}${value !== 1 ? 's' : ''} ago`;
+            }
+
+            value /= unit.threshold;
+          }
+        };
+
+        return (
+          <Tooltip>
+            <TooltipTrigger>
+              <div>{getRelativeTime(date)}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {date.toLocaleString("en-US", { timeZoneName: "short" })}
+            </TooltipContent>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const vulnerability = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <DotsHorizontalIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(vulnerability.id)}
+              >
+                Copy Vulnerability ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>View Details</DropdownMenuItem>
+              <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
 
   const table = useReactTable({
     data,
@@ -408,12 +328,7 @@ function DataTable() {
 
   return (
     <div className="mx-auto w-full max-w-4xl">
-      <h1 className="mt-12 text-2xl font-bold">Vulnerabilitiy & Scan</h1>
-      <div className="flex justify-end -mt-8">
-        <Button>
-          Start New Scan
-        </Button>
-      </div>
+      <h1 className="mt-12 text-2xl font-bold">Vulnerabilities</h1>
       <div className="mt-2 flex items-center justify-center py-4">
         <Input
           placeholder="Filter vulnerabilities..."
@@ -438,11 +353,11 @@ function DataTable() {
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="capitalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onSelect={(e) => e.preventDefault()}
                 >
-                  {column.id}
+                  {columnLabels[column.id] ?? column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -455,12 +370,14 @@ function DataTable() {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                    {header.isPlaceholder ? null : (
+                      <div className={header.column.id === "severity" ? "ml-4" : ""}>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -498,8 +415,22 @@ function DataTable() {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {(() => {
+            const total = table.getFilteredRowModel().rows.length;
+            const { pageIndex, pageSize } = table.getState().pagination;
+
+            if (total === 0) {
+              return "No vulnerabilities found.";
+            }
+
+            if (total === 1) {
+              return "Displaying 1 vulnerability.";
+            }
+
+            const start = pageIndex * pageSize + 1;
+            const end = Math.min((pageIndex + 1) * pageSize, total);
+            return `Displaying ${start} - ${end} of ${total} vulnerabilities`;
+          })()}
         </div>
         <div className="space-x-2">
           <Button
@@ -520,14 +451,6 @@ function DataTable() {
           </Button>
         </div>
       </div>
-    </div>
-  );
-}
-
-export default function VulnsPage() {
-  return (
-    <div className="container w-full">
-      <DataTable />
     </div>
   );
 }

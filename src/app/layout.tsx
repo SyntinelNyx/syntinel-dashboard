@@ -30,11 +30,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script
-          defer
-          src="https://umami.miguelmuniz.com/script.js"
-          data-website-id="462ec6f6-dd14-4ee5-8fd0-0d0f028edd22"
-        />
         <PublicEnvScript />
       </head>
       <body
