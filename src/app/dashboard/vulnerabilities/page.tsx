@@ -84,6 +84,10 @@ const severityStyles: Record<string, {
   iconColor?: string;
   animate?: string;
 }> = {
+  unknown: {
+    bg: "bg-slate-100 dark:bg-slate-700",
+    text: "text-slate-800 dark:text-slate-200",
+  },
   low: {
     bg: "bg-green-400 dark:bg-green-700",
     text: "text-white",
