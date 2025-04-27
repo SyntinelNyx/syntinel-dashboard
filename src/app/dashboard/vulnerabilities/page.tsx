@@ -18,7 +18,7 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -61,6 +61,7 @@ type Vulnerability = {
   severity: string;
   cvss: number;
   assetsAffected: string[];
+  assetUUID: string;
   lastSeen: string;
 };
 
@@ -71,13 +72,6 @@ type VulnerabilityData = {
   Reference: string[];
   CreatedOn: string;
   LastModified: string;
-};
-
-
-const defaultStyle = {
-  text: "text-black dark:text-white",
-  icon: <Info className="w-4 h-4" />,
-  iconColor: "text-black dark:text-white",
 };
 
 const severityStyles: Record<string, {
@@ -257,7 +251,6 @@ const columns: ColumnDef<Vulnerability>[] = [
               </DialogHeader>
 
               <div className="space-y-6">
-                {/* Vulnerability Name */}
                 <div className="text-1xl font-semibold text-gray-800">{vulnData.VulnerabilityName}</div>
 
                 <p className="text-base text-gray-600">{vulnData.VulnerabilityDescription}</p>
@@ -364,6 +357,7 @@ const columns: ColumnDef<Vulnerability>[] = [
       const visibleAssets = assets.slice(0, maxVisible);
       const hiddenAssets = assets.slice(maxVisible);
 
+      const router = useRouter();
       return (
         <>
           <div ref={containerRef} className="flex flex-wrap items-center gap-2 overflow-hidden">
@@ -371,6 +365,7 @@ const columns: ColumnDef<Vulnerability>[] = [
               <Chip
                 key={asset}
                 label={asset}
+                onClick={() => router.push(`/dashboard/assets/manage/${row.getValue("assetUUID")}`)}
                 className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
               />
             ))}
@@ -395,6 +390,7 @@ const columns: ColumnDef<Vulnerability>[] = [
                   <Chip
                     key={asset}
                     label={asset}
+                    onClick={() => router.push(`/dashboard/assets/manage/${row.getValue("assetUUID")}`)}
                     className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
                   />
                 ))}
