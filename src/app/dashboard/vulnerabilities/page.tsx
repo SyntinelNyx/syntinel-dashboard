@@ -54,14 +54,17 @@ import {
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
+type assetsAffected = {
+  assetUUID: string;
+  hostname: string;
+}
+
 type Vulnerability = {
   id: string;
   status: "new" | "active" | "resurfaced" | "resolved";
   vulnerability: string;
   severity: string;
-  cvss: number;
-  assetsAffected: string[];
-  assetUUID: string;
+  assetsAffected: assetsAffected[];
   lastSeen: string;
 };
 
@@ -319,7 +322,7 @@ const columns: ColumnDef<Vulnerability>[] = [
     accessorKey: "assetsAffected",
     header: "Assets Affected",
     cell: ({ row }) => {
-      const assets: string[] = row.getValue("assetsAffected");
+      const assets: assetsAffected[] = row.getValue("assetsAffected");
 
       const containerRef = useRef<HTMLDivElement>(null);
       const [maxVisible, setMaxVisible] = useState(assets.length);
@@ -335,7 +338,7 @@ const columns: ColumnDef<Vulnerability>[] = [
           let count = 0;
 
           for (const asset of assets) {
-            const approxWidth = asset.length * 8 + 32;
+            const approxWidth = asset.hostname.length * 8 + 32;
             if (usedWidth + approxWidth < availableWidth) {
               usedWidth += approxWidth + 8;
               count++;
@@ -363,9 +366,9 @@ const columns: ColumnDef<Vulnerability>[] = [
           <div ref={containerRef} className="flex flex-wrap items-center gap-2 overflow-hidden">
             {visibleAssets.map((asset) => (
               <Chip
-                key={asset}
-                label={asset}
-                onClick={() => router.push(`/dashboard/assets/manage/${row.getValue("assetUUID")}`)}
+                key={asset.hostname}
+                label={asset.hostname}
+                onClick={() => router.push(`/dashboard/assets/view/${asset.assetUUID}`)}
                 className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
               />
             ))}
@@ -388,9 +391,9 @@ const columns: ColumnDef<Vulnerability>[] = [
               <div className="flex flex-wrap gap-2 mt-4">
                 {assets.map((asset) => (
                   <Chip
-                    key={asset}
-                    label={asset}
-                    onClick={() => router.push(`/dashboard/assets/manage/${row.getValue("assetUUID")}`)}
+                    key={asset.hostname}
+                    label={asset.hostname}
+                    onClick={() => router.push(`/dashboard/assets/view/${asset.assetUUID}`)}
                     className="bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-150 ease-in-out flex items-center gap-1"
                   />
                 ))}
