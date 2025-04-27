@@ -1,6 +1,7 @@
 "use client";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -38,7 +39,6 @@ import {
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 
 type Asset = {
   assetId: string;
