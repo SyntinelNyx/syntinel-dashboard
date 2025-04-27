@@ -2,7 +2,7 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { AlertCircle, AlertTriangle, AlertOctagon, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 
 import {
   ColumnDef,
@@ -174,6 +174,14 @@ const Chip: React.FC<ChipProps> = ({ label, className, ...props }) => {
   );
 };
 
+const columnLabels: Record<string, string> = {
+  severity: "Severity",
+  vulnerability: "Vulnerability",
+  status: "Status",
+  assetsAffected: "Assets Affected",
+  lastSeen: "Last Seen",
+};
+
 const columns: ColumnDef<Vulnerability>[] = [
   {
     accessorKey: "severity",
@@ -183,7 +191,7 @@ const columns: ColumnDef<Vulnerability>[] = [
       const { bg, text, icon, iconColor, animate } = severityStyles[severity];
 
       return (
-        <div className="flex items-center gap-2" role="status" aria-live="polite">
+        <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
           {icon && (
             <span
               className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
@@ -538,11 +546,11 @@ function DataTable({ data }: { data: Vulnerability[] }) {
               .map((column) => (
                 <DropdownMenuCheckboxItem
                   key={column.id}
-                  className="capitalize"
                   checked={column.getIsVisible()}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                  onSelect={(e) => e.preventDefault()}
                 >
-                  {column.id}
+                  {columnLabels[column.id] ?? column.id}
                 </DropdownMenuCheckboxItem>
               ))}
           </DropdownMenuContent>
@@ -555,12 +563,14 @@ function DataTable({ data }: { data: Vulnerability[] }) {
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
+                    {header.isPlaceholder ? null : (
+                      <div className={header.column.id === "severity" ? "ml-4" : ""}>
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      </div>
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
