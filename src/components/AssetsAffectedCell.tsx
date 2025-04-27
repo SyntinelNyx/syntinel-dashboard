@@ -25,7 +25,7 @@ export function AssetsAffectedCell({ assets }: AssetsAffectedCellProps) {
 
     const container = containerRef.current;
     const resizeObserver = new ResizeObserver(() => {
-      let availableWidth = container.clientWidth;
+      const availableWidth = container.clientWidth;
       let usedWidth = 0;
       let count = 0;
 

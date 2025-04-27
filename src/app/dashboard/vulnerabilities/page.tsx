@@ -42,14 +42,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
-
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-import { Chip } from "@/components/Chip";
+import { VulnerabilityCell } from "@/components/VulnerabilityCell"
 import { AssetsAffectedCell } from "@/components/AssetsAffectedCell"
 
 import { apiFetch } from "@/lib/api-fetch";
@@ -67,15 +60,6 @@ type Vulnerability = {
   severity: string;
   assetsAffected: assetsAffected[];
   lastSeen: string;
-};
-
-type VulnerabilityData = {
-  VulnerabilityName: string;
-  VulnerabilityDescription: string;
-  CvssScore: number;
-  Reference: string[];
-  CreatedOn: string;
-  LastModified: string;
 };
 
 const severityStyles: Record<string, {
@@ -160,247 +144,6 @@ export default function VulnsPage() {
   );
 }
 
-
-
-const columnLabels: Record<string, string> = {
-  severity: "Severity",
-  vulnerability: "Vulnerability",
-  status: "Status",
-  assetsAffected: "Assets Affected",
-  lastSeen: "Last Seen",
-};
-
-const columns: ColumnDef<Vulnerability>[] = [
-  {
-    accessorKey: "severity",
-    header: "Severity",
-    cell: ({ row }) => {
-      const severity = (row.getValue("severity") as string).toLowerCase();
-      const { bg, text, icon, iconColor, animate } = severityStyles[severity];
-
-      return (
-        <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
-          {icon && (
-            <span
-              className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
-              aria-label={`${severity} severity`}
-            >
-              {icon}
-            </span>
-          )}
-
-          <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
-            {severity}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "vulnerability",
-    header: "Vulnerability",
-    cell: ({ row }) => {
-      const vulnID = row.getValue("vulnerability") as string;
-      const [open, setOpen] = useState(false);
-      const [loading, setLoading] = useState(false);
-      const [vulnData, setVulnData] = useState<VulnerabilityData>({
-        VulnerabilityName: '',
-        VulnerabilityDescription: '',
-        CvssScore: 0,
-        Reference: [],
-        CreatedOn: '',
-        LastModified: '',
-      });
-
-      const handleClick = async () => {
-        if (loading) return;
-        setLoading(true);
-
-        try {
-          const res = await apiFetch(`/vuln/retrieve-data`, {
-            method: "POST",
-            body: JSON.stringify({ vulnID }),
-          });
-          const json = await res.json();
-
-          setVulnData({
-            VulnerabilityName: json.vulnerabilityName,
-            VulnerabilityDescription: json.vulnerabilityDescription,
-            CvssScore: json.cvssScore,
-            Reference: json.reference,
-            CreatedOn: json.createdOn,
-            LastModified: json.lastModified,
-          });
-          setOpen(true);
-        } catch (error) {
-          console.error("Failed to retrieve data:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      return (
-        <>
-          <Chip
-            label={vulnID}
-            onClick={handleClick}
-            className={`bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 px-3 py-1 font-semibold capitalize flex items-center gap-1 transition-all duration-150 ease-in-out cursor-pointer ${loading ? "opacity-50 pointer-events-none" : "hover:scale-105"}`}
-          />
-
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-xl">
-              <DialogHeader>
-                <DialogTitle className="text-2xl font-semibold text-gray-800">Vulnerability Details</DialogTitle>
-              </DialogHeader>
-
-              <div className="space-y-6">
-                <div className="text-1xl font-semibold text-gray-800">{vulnData.VulnerabilityName}</div>
-
-                <p className="text-base text-gray-600">{vulnData.VulnerabilityDescription}</p>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-base text-gray-500">
-                    <div>
-                      <strong>CVSS Score:</strong> {vulnData.CvssScore}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between text-base text-gray-500">
-                    <div>
-                      <strong>Created On:</strong> {new Date(vulnData.CreatedOn).toLocaleDateString()}
-                    </div>
-                    <div>
-                      <strong>Last Modified:</strong> {new Date(vulnData.LastModified).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-
-                <a
-                  href={vulnData.Reference[0]}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline mt-4 block"
-                >
-                  View Reference
-                </a>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </>
-      );
-    }
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = (row.getValue("status") as string).toLowerCase();
-
-      const statusColors: Record<string, string> = {
-        "new": "bg-blue-500",
-        "active": "bg-amber-500",
-        "resurfaced": "bg-amber-500",
-        "resolved": "bg-green-500",
-      };
-
-      const dotColor = statusColors[status] ?? "bg-slate-400";
-
-      return (
-        <div className="inline-block">
-          <div className="inline-flex items-center gap-2">
-            <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
-
-            <div className="font-semibold capitalize">
-              {status}
-            </div>
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "assetsAffected",
-    header: "Assets Affected",
-    cell: ({ row }) => {
-      const assets = row.getValue("assetsAffected") as assetsAffected[];
-      return <AssetsAffectedCell assets={assets} />;
-    },
-  },
-  {
-    accessorKey: "lastSeen",
-    header: "Last Seen",
-    cell: ({ row }) => {
-      const raw = row.getValue("lastSeen");
-      const date = new Date(raw as string);
-
-      const getRelativeTime = (date: Date) => {
-        const now = new Date();
-        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-        const units = [
-          { label: 'second', threshold: 60 },
-          { label: 'minute', threshold: 60 },
-          { label: 'hour', threshold: 24 },
-          { label: 'day', threshold: 30 },
-          { label: 'month', threshold: 12 },
-          { label: 'year', threshold: Infinity }
-        ];
-
-        let value = diffInSeconds;
-        for (let i = 0; i < units.length; i++) {
-          const unit = units[i];
-
-          if (value < unit.threshold) {
-            return `${Math.floor(value)} ${unit.label}${value !== 1 ? 's' : ''} ago`;
-          }
-
-          value /= unit.threshold;
-        }
-      };
-
-      return (
-        <Tooltip>
-          <TooltipTrigger>
-            <div>{getRelativeTime(date)}</div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {date.toLocaleString("en-US", { timeZoneName: "short" })}
-          </TooltipContent>
-        </Tooltip>
-      );
-    },
-  },
-  {
-    id: "actions",
-    enableHiding: false,
-    cell: ({ row }) => {
-      const vulnerability = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(vulnerability.id)}
-            >
-              Copy Vulnerability ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
-];
-
 function DataTable({ data }: { data: Vulnerability[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -409,6 +152,160 @@ function DataTable({ data }: { data: Vulnerability[] }) {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const columnLabels: Record<string, string> = {
+    severity: "Severity",
+    vulnerability: "Vulnerability",
+    status: "Status",
+    assetsAffected: "Assets Affected",
+    lastSeen: "Last Seen",
+  };
+
+  const columns: ColumnDef<Vulnerability>[] = [
+    {
+      accessorKey: "severity",
+      header: "Severity",
+      cell: ({ row }) => {
+        const severity = (row.getValue("severity") as string).toLowerCase();
+        const { bg, text, icon, iconColor, animate } = severityStyles[severity];
+
+        return (
+          <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
+            {icon && (
+              <span
+                className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
+                aria-label={`${severity} severity`}
+              >
+                {icon}
+              </span>
+            )}
+
+            <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
+              {severity}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "vulnerability",
+      header: "Vulnerability",
+      cell: ({ row }) => {
+        const vulnID = row.getValue("vulnerability") as string;
+        return <VulnerabilityCell vulnID={vulnID} />;
+      },
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = (row.getValue("status") as string).toLowerCase();
+
+        const statusColors: Record<string, string> = {
+          "new": "bg-blue-500",
+          "active": "bg-amber-500",
+          "resurfaced": "bg-amber-500",
+          "resolved": "bg-green-500",
+        };
+
+        const dotColor = statusColors[status] ?? "bg-slate-400";
+
+        return (
+          <div className="inline-block">
+            <div className="inline-flex items-center gap-2">
+              <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
+
+              <div className="font-semibold capitalize">
+                {status}
+              </div>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "assetsAffected",
+      header: "Assets Affected",
+      cell: ({ row }) => {
+        const assets = row.getValue("assetsAffected") as assetsAffected[];
+        return <AssetsAffectedCell assets={assets} />;
+      },
+    },
+    {
+      accessorKey: "lastSeen",
+      header: "Last Seen",
+      cell: ({ row }) => {
+        const raw = row.getValue("lastSeen");
+        const date = new Date(raw as string);
+
+        const getRelativeTime = (date: Date) => {
+          const now = new Date();
+          const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+          const units = [
+            { label: 'second', threshold: 60 },
+            { label: 'minute', threshold: 60 },
+            { label: 'hour', threshold: 24 },
+            { label: 'day', threshold: 30 },
+            { label: 'month', threshold: 12 },
+            { label: 'year', threshold: Infinity }
+          ];
+
+          let value = diffInSeconds;
+          for (let i = 0; i < units.length; i++) {
+            const unit = units[i];
+
+            if (value < unit.threshold) {
+              return `${Math.floor(value)} ${unit.label}${value !== 1 ? 's' : ''} ago`;
+            }
+
+            value /= unit.threshold;
+          }
+        };
+
+        return (
+          <Tooltip>
+            <TooltipTrigger>
+              <div>{getRelativeTime(date)}</div>
+            </TooltipTrigger>
+            <TooltipContent>
+              {date.toLocaleString("en-US", { timeZoneName: "short" })}
+            </TooltipContent>
+          </Tooltip>
+        );
+      },
+    },
+    {
+      id: "actions",
+      enableHiding: false,
+      cell: ({ row }) => {
+        const vulnerability = row.original;
+
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <DotsHorizontalIcon className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => navigator.clipboard.writeText(vulnerability.id)}
+              >
+                Copy Vulnerability ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>View Details</DropdownMenuItem>
+              <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
 
   const table = useReactTable({
     data,
