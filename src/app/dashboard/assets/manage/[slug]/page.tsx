@@ -13,6 +13,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { apiFetch } from '@/lib/api-fetch';
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 // Update type for snapshot data to match the provided structure
 type Snapshot = {
@@ -114,6 +116,12 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
 
   return (
     <div className="p-4">
+      <div className="mb-6">
+        <Link href="/dashboard/assets" className="flex items-center text-sm font-medium text-primary hover:underline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Assets
+        </Link>
+      </div>
       <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
 
       <div className="mt-8">
