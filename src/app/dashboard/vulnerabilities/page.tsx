@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 
@@ -104,8 +104,12 @@ export default function VulnsPage() {
   const { toast } = useToast();
   const [vulns, setVulns] = useState<Vulnerability[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) { return; }
+    hasFetched.current = true;
+
     async function fetchVulns() {
       try {
         const res = await apiFetch("/vuln/retrieve");
