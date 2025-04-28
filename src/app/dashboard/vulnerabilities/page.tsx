@@ -256,7 +256,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             const unit = units[i];
 
             if (value < unit.threshold) {
-              return `${Math.floor(value)} ${unit.label}${value !== 1 ? 's' : ''} ago`;
+              return `${Math.floor(value)} ${unit.label}${Math.floor(value) !== 1 ? 's' : ''} ago`;
             }
 
             value /= unit.threshold;
