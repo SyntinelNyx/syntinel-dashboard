@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
+import { Terminal as XTerm } from '@xterm/xterm';
+import '@xterm/xterm/css/xterm.css';
 import {
   Table,
   TableBody,
@@ -13,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { apiFetch } from '@/lib/api-fetch';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
@@ -32,15 +35,115 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const xtermRef = useRef<XTerm | null>(null);
+  const [commandBuffer, setCommandBuffer] = useState<string>('');
 
 
+  useEffect(() => {
+    // Initialize terminal
+    if (typeof window !== 'undefined' && terminalRef.current) {
+      // Clean up previous terminal instance if it exists
+      if (xtermRef.current) {
+        xtermRef.current.dispose();
+      }
+      
+      // Create new terminal
+      const term = new XTerm({
+        cursorBlink: true,
+        fontSize: 14,
+        theme: {
+          background: '#1a1b26',
+          foreground: '#c0caf5',
+          cursor: '#c0caf5',
+        }
+      });
+
+      xtermRef.current = term;
+      term.open(terminalRef.current);
+      term.write('Connected to asset: \x1B[1;3;32m' + slug + '\x1B[0m\r\n$ ');
+      console.log('Terminal initialized for asset:', slug);
+      term.onData((data) => {
+        // Handle backspace
+        if (data === '\x7F') {
+          if (commandBuffer.length > 0) {
+            term.write('\b \b'); // Erase character
+            setCommandBuffer(prev => prev.substring(0, prev.length - 1));
+          }
+          return;
+        }
+        
+        // Echo back input for visual feedback
+        term.write(data);
+        
+        // If enter key is pressed, process the command
+        if (data === '\r') {
+          // Store command to be processed
+          const command = commandBuffer.trim();
+
+          console.log('Command entered:', command);
+          
+          // Clear the buffer for next command
+          setCommandBuffer('');
+          
+          // Execute command
+          if (command) {
+            term.write('\r\n');
+            executeCommand(command, term);
+          } else {
+            // Just show a new prompt for empty commands
+            term.write('\r\n$ ');
+          }
+        } else {
+          // Add to command buffer
+          setCommandBuffer(prev => prev + data);
+        }
+      });
+    }
+    const executeCommand = async (command: string, term: XTerm) => {
+      try {
+        term.write(`Executing command: ${command}\r\n`);
+        
+        // Make API request to execute command on the asset
+        const response = await apiFetch(`/assets/${slug}/shell`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ command }),
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Command failed with status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        // Display command output
+        term.write(`${result.output}\r\n`);
+      } catch (error) {
+        // Handle errors
+        console.error('Command execution error:', error);
+        term.write(`\x1B[1;3;31mError: ${error instanceof Error ? error.message : 'Unknown error'}\x1B[0m\r\n`);
+      } finally {
+        // Show prompt for next command
+        term.write('$ ');
+      }
+    };
+
+    return () => {
+      // Clean up on unmount
+      if (xtermRef.current) {
+        xtermRef.current.dispose();
+      }
+    };
+  }, [slug]);
 
   useEffect(() => {
     const fetchSnapshots = async () => {
       try {
         setIsLoading(true);
         const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
-
         if (!response.ok) {
           throw new Error(`Failed to fetch snapshots: ${response.status}`);
         }
@@ -123,6 +226,18 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         </Link>
       </div>
       <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
+
+      {/* Terminal Section */}
+            <Card className="mb-8">
+        <CardHeader>
+          <CardTitle>Terminal Session</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="border rounded-md overflow-hidden h-64 bg-[#1a1b26]">
+            <div ref={terminalRef} className="h-full" />
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
