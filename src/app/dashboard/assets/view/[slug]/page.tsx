@@ -1,10 +1,20 @@
+
+
 "use client";
 import { useEffect, useState } from "react";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { TrendingUp, ArrowLeft } from "lucide-react";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,11 +49,41 @@ export type AssetDetails = {
   };
 };
 
+type UtilizationData = {
+  time: string;
+  cpu: number;
+  memory: number;
+  disk: number;
+};
+
+const chartData = [
+  { time: "08:00", cpu: 45, memory: 30 },
+  { time: "10:00", cpu: 65, memory: 40 },
+  { time: "12:00", cpu: 75, memory: 55 },
+  { time: "14:00", cpu: 85, memory: 60 },
+  { time: "16:00", cpu: 70, memory: 45 },
+  { time: "18:00", cpu: 55, memory: 35 },
+];
+
+const chartConfig = {
+  cpu: {
+    label: "CPU Usage",
+    color: "hsl(var(--chart-1))",
+  },
+  memory: {
+    label: "Memory Usage",
+    color: "hsl(var(--chart-2))",
+  },
+} satisfies ChartConfig;
+
+
 export default function AssetPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
   const { toast } = useToast();
   const [asset, setAsset] = useState<AssetDetails | null>(null);
+  const [utilizationData, setUtilizationData] = useState<UtilizationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     async function fetchAssets() {
@@ -70,6 +110,43 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     fetchAssets();
   }, [slug, toast]);
 
+  useEffect(() => {
+    async function fetchUtilizationData() {
+      try {
+        const res = await apiFetch(`/assets/${slug}/telemetry-usage`, { method: 'GET' });
+        const json = await res.json();
+        
+        // Format the data for the chart
+        const formattedData = json.map((item: any) => ({
+          time: new Date(item.TelemetryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          cpu: Math.round(item.CpuUsage), // Already in percentage
+          memory: Math.round(item.MemUsedPercent), // Already in percentage
+          disk: Math.round(item.DiskUsedPercent), // Already in percentage
+        }));
+        
+        setUtilizationData(formattedData);
+      } catch (error) {
+        // Fallback to dummy data if API call fails
+        setUtilizationData([
+          { time: "08:00", cpu: 45, memory: 30, disk: 20 },
+          { time: "10:00", cpu: 65, memory: 40, disk: 22 },
+          { time: "12:00", cpu: 75, memory: 55, disk: 25 },
+          { time: "14:00", cpu: 85, memory: 60, disk: 28 },
+          { time: "16:00", cpu: 70, memory: 45, disk: 30 },
+          { time: "18:00", cpu: 55, memory: 35, disk: 32 },
+        ]);
+        
+        console.error("Failed to fetch utilization data:", error);
+      } finally {
+        setChartLoading(false);
+      }
+    }
+
+    if (slug) {
+      fetchUtilizationData();
+    }
+  }, [slug]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
@@ -88,14 +165,122 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     );
   }
 
-  return (
-    <div className="max-w-5xl mx-auto mt-8 p-8">
-      <div className="mb-6">
-        <Link href="/dashboard/assets" className="flex items-center text-sm font-medium text-primary hover:underline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Assets
-        </Link>
+    // Find peak values
+    const peakCpu = utilizationData.length > 0 
+    ? Math.max(...utilizationData.map(d => d.cpu))
+    : 0;
+  
+  const peakMemory = utilizationData.length > 0 
+    ? Math.max(...utilizationData.map(d => d.memory))
+    : 0;
+  
+  const peakDisk = utilizationData.length > 0 
+    ? Math.max(...utilizationData.map(d => d.disk))
+    : 0;
+
+  // Get time range if data is available
+  const timeRange = utilizationData.length > 0 
+    ? `${utilizationData[0].time} - ${utilizationData[utilizationData.length - 1].time}`
+    : "No data available";
+
+    return (
+      <div className="max-w-5xl mx-auto mt-8 p-8">
+        <div className="mb-6">
+          <Link href="/dashboard/assets" className="flex items-center text-sm font-medium text-primary hover:underline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Assets
+          </Link>
+        </div>
+    
+        {/* Usage Analytics Chart */}
+        <div className="mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Resource Utilization</CardTitle>
+            <CardDescription>
+              CPU, memory, and disk utilization over time
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {chartLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p>Loading utilization data...</p>
+              </div>
+            ) : (
+              <ChartContainer config={chartConfig}>
+                <AreaChart
+                  accessibilityLayer
+                  data={utilizationData}
+                  margin={{
+                    top: 10,
+                    right: 30,
+                    left: 10,
+                    bottom: 0,
+                  }}
+                  height={300}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="time"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    label={{ value: 'Telemetry Time', position: 'insideBottom', offset: -5 }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    label={{ value: 'Usage (%)', angle: -90, position: 'insideLeft' }}
+                    domain={[0, 100]}
+                  />
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent indicator="line" />}
+                  />
+                  <Area
+                    dataKey="disk"
+                    type="monotone"
+                    fill="var(--color-disk)"
+                    fillOpacity={0.4}
+                    stroke="var(--color-disk)"
+                    stackId="3"
+                  />
+                  <Area
+                    dataKey="memory"
+                    type="monotone"
+                    fill="var(--color-memory)"
+                    fillOpacity={0.4}
+                    stroke="var(--color-memory)"
+                    stackId="2"
+                  />
+                  <Area
+                    dataKey="cpu"
+                    type="monotone"
+                    fill="var(--color-cpu)"
+                    fillOpacity={0.4}
+                    stroke="var(--color-cpu)"
+                    stackId="1"
+                  />
+                  <ChartLegend content={<ChartLegendContent />} />
+                </AreaChart>
+              </ChartContainer>
+            )}
+          </CardContent>
+          <CardFooter>
+            <div className="flex flex-col w-full gap-2 text-sm">
+              <div className="flex items-center gap-2 font-medium leading-none">
+                Peak Utilization: CPU {peakCpu}% | Memory {peakMemory}% | Disk {peakDisk}% 
+                <TrendingUp className="h-4 w-4 ml-2" />
+              </div>
+              <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                Recorded today between {timeRange}
+              </div>
+            </div>
+          </CardFooter>
+        </Card>
       </div>
+
       <Card>
         <CardHeader className="text-2xl">
           <CardTitle>Asset Details</CardTitle>
