@@ -193,12 +193,7 @@ export default function ActionsPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        toast({
-          variant: "destructive",
-          title: "Create Action Failed",
-          description: errorText || "Unknown error occurred",
-        });
-        return;
+        throw new Error(errorText);
       }
 
       toast({
@@ -216,16 +211,42 @@ export default function ActionsPage() {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Unexpected Error",
+        title: "Failed to create action",
         description: (error instanceof Error ? error.message : "Unknown error"),
       });
     }
   };
 
-  const handleWorkflowSubmit = (e: React.FormEvent) => {
+  const handleWorkflowSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    alert(`Running workflow with ${selectedActions.length} actions on ${selectedAssets.length} assets`)
+    const payload = {
+      actions: selectedActions.map(action => ({ actionId: action.actionId })),
+      assets: selectedAssets.map(asset => ({ assetId: asset.assetId })),
+    };
+
+    try {
+      const response = await apiFetch("/action/run", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
+
+      toast({
+        title: "Workflow Ran Successfully!",
+        description: "Your workflow has been ran successfully.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed running workflow",
+        description: (error instanceof Error ? error.message : "Unknown error"),
+      });
+    }
 
     setSelectedActions([])
     setSelectedAssets([])
