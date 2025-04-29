@@ -8,7 +8,6 @@ import {
   TerminalIcon,
   UserIcon,
   UploadIcon,
-  PlayIcon,
   XIcon,
   ServerIcon,
   MoveIcon,
@@ -23,11 +22,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core"
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core"
 import {
   arrayMove,
   SortableContext,
@@ -269,13 +267,13 @@ export default function ActionsPage() {
     }
   }
 
-  const handleDragEnd = (event: any) => {
+  const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
 
-    if (active.id !== over.id) {
+    if (active.id !== over?.id) {
       setSelectedActions((items) => {
         const oldIndex = items.findIndex((item) => item.actionId === active.id)
-        const newIndex = items.findIndex((item) => item.actionId === over.id)
+        const newIndex = items.findIndex((item) => item.actionId === over?.id)
         return arrayMove(items, oldIndex, newIndex)
       })
     }
@@ -310,364 +308,337 @@ export default function ActionsPage() {
   }, [toast]);
 
   return (
-    <TooltipProvider>
-      <main className="flex min-h-screen w-full flex-col p-4">
-        <div className="flex justify-between items-center my-6">
-          <h1 className="text-2xl font-bold">Actions</h1>
-          <div>
-            {actions && actions.length > 0 && (
-              <Dialog open={workflowOpen} onOpenChange={setWorkflowOpen}>
-                <DialogTrigger asChild>
-                  <Button type="button" variant="outline" className="mx-1">
-                    Run Workflow
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
-                  <form onSubmit={handleWorkflowSubmit}>
-                    <DialogHeader>
-                      <DialogTitle>Create and Run Workflow</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid gap-2">
-                        <Label className="text-base">Select Actions</Label>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Select actions and drag to reorder them in your workflow
-                        </p>
-
-                        <div className="grid grid-cols-1 gap-2 mb-4">
-                          {actions.length > 0 ? (
-                            actions.map((action) => (
-                              <div
-                                key={action.actionId}
-                                className={cn(
-                                  "flex items-center space-x-2 border rounded-md p-2",
-                                  selectedActions.some((a) => a.actionId === action.actionId) ? "border-primary bg-primary/5" : "",
-                                )}
-                              >
-                                <Checkbox
-                                  checked={selectedActions.some((a) => a.actionId === action.actionId)}
-                                  onCheckedChange={() => toggleActionSelection(action)}
-                                  id={`action-${action.actionId}`}
-                                />
-                                <Label
-                                  htmlFor={`action-${action.actionId}`}
-                                  className="flex-1 flex items-center cursor-pointer"
-                                >
-                                  {action.actionType === "command" ? (
-                                    <TerminalIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                                  ) : (
-                                    <FileIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                                  )}
-                                  {action.actionName}
-                                </Label>
-                              </div>
-                            ))
-                          ) : (
-                            <div className="text-center p-4 text-muted-foreground">
-                              No actions available. Create some actions first.
-                            </div>
-                          )}
-                        </div>
-
-                        {selectedActions.length > 0 && (
-                          <>
-                            <Label className="text-base">Workflow Order</Label>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              Drag and drop to reorder actions in your workflow
-                            </p>
-
-                            <div className="border rounded-md p-2 bg-muted/30" onClick={handleSortableContainerClick}>
-                              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                <SortableContext
-                                  items={selectedActions.map((a) => a.actionId)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  {selectedActions.map((action, index) => (
-                                    <SortableItem
-                                      key={action.actionId}
-                                      action={action}
-                                      index={index}
-                                      onRemove={() => toggleActionSelection(action)}
-                                    />
-                                  ))}
-                                </SortableContext>
-                              </DndContext>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      <Separator />
-
-                      <div className="grid gap-2">
-                        <Label className="text-base">Select Assets</Label>
-                        <p className="text-sm text-muted-foreground mb-2">Choose assets to run the workflow on</p>
-
-                        <ScrollArea className="h-[200px] border rounded-md p-2">
-                          <div className="grid grid-cols-1 gap-2">
-                            {workflowAssets.map((asset) => (
-                              <div
-                                key={asset.assetId}
-                                className={cn(
-                                  "flex items-center space-x-2 border rounded-md p-2",
-                                  selectedAssets.some((a) => a.assetId === asset.assetId)
-                                    ? "border-primary bg-primary/5"
-                                    : "",
-                                )}
-                              >
-                                <Checkbox
-                                  checked={selectedAssets.some((a) => a.assetId === asset.assetId)}
-                                  onCheckedChange={() => toggleAssetSelection(asset)}
-                                  id={`asset-${asset.assetId}`}
-                                />
-                                <Label
-                                  htmlFor={`asset-${asset.assetId}`}
-                                  className="flex-1 flex items-center cursor-pointer"
-                                >
-                                  <ServerIcon className="h-4 w-4 mr-2 text-muted-foreground" />
-                                  <span>{asset.hostname}</span>
-                                </Label>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-
-                        {selectedAssets.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedAssets.map((asset) => (
-                              <Badge key={asset.assetId} variant="secondary" className="flex items-center gap-1">
-                                <ServerIcon className="h-3 w-3" />
-                                <span>{asset.hostname}</span>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-4 w-4 ml-1 p-0"
-                                  onClick={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
-                                    toggleAssetSelection(asset)
-                                  }}
-                                >
-                                  <XIcon className="h-3 w-3" />
-                                </Button>
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={selectedActions.length === 0 || selectedAssets.length === 0}>
-                        Run Workflow
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-            )}
-
-            <Dialog open={open} onOpenChange={setOpen}>
+    <main className="flex min-h-screen w-full flex-col p-4">
+      <div className="flex justify-between items-center my-6">
+        <h1 className="text-2xl font-bold">Actions</h1>
+        <div>
+          {actions && actions.length > 0 && (
+            <Dialog open={workflowOpen} onOpenChange={setWorkflowOpen}>
               <DialogTrigger asChild>
-                <Button className="mx-1">Create Action</Button>
+                <Button type="button" variant="outline" className="mx-1">
+                  Run Workflow
+                </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={handleSubmit}>
+              <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
+                <form onSubmit={handleWorkflowSubmit}>
                   <DialogHeader>
-                    <DialogTitle>Create New Action</DialogTitle>
+                    <DialogTitle>Create and Run Workflow</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="actionName">Action Name</Label>
-                      <Input
-                        id="actionName"
-                        name="actionName"
-                        value={formData.actionName || ""}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Action Type</Label>
-                      <RadioGroup
-                        value={formData.actionType}
-                        onValueChange={handleActionTypeChange}
-                        className="flex gap-4"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="command" id="command" />
-                          <Label htmlFor="command" className="flex items-center gap-1">
-                            <TerminalIcon className="h-4 w-4" />
-                            Command
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="file" id="file" />
-                          <Label htmlFor="file" className="flex items-center gap-1">
-                            <FileIcon className="h-4 w-4" />
-                            File
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </div>
+                      <Label className="text-base">Select Actions</Label>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        Select actions and drag to reorder them in your workflow
+                      </p>
 
-                    {formData.actionType === "command" && (
-                      <div className="grid gap-2">
-                        <Label htmlFor="actionPayload">Command</Label>
-                        <Input
-                          id="actionPayload"
-                          name="actionPayload"
-                          value={formData.actionPayload || ""}
-                          onChange={handleInputChange}
-                          placeholder="Enter command"
-                        />
+                      <div className="grid grid-cols-1 gap-2 mb-4">
+                        {actions.length > 0 ? (
+                          actions.map((action) => (
+                            <div
+                              key={action.actionId}
+                              className={cn(
+                                "flex items-center space-x-2 border rounded-md p-2",
+                                selectedActions.some((a) => a.actionId === action.actionId) ? "border-primary bg-primary/5" : "",
+                              )}
+                            >
+                              <Checkbox
+                                checked={selectedActions.some((a) => a.actionId === action.actionId)}
+                                onCheckedChange={() => toggleActionSelection(action)}
+                                id={`action-${action.actionId}`}
+                              />
+                              <Label
+                                htmlFor={`action-${action.actionId}`}
+                                className="flex-1 flex items-center cursor-pointer"
+                              >
+                                {action.actionType === "command" ? (
+                                  <TerminalIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                                ) : (
+                                  <FileIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                                )}
+                                {action.actionName}
+                              </Label>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center p-4 text-muted-foreground">
+                            No actions available. Create some actions first.
+                          </div>
+                        )}
                       </div>
-                    )}
-                    {formData.actionType === "file" && (
-                      <div className="grid gap-2">
-                        <Label>File</Label>
-                        <div
-                          className={cn(
-                            "border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer",
-                            isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25",
-                            selectedFile ? "bg-muted/50" : "",
-                          )}
-                          onDragOver={handleDragOver}
-                          onDragLeave={handleDragLeave}
-                          onDrop={handleDrop}
-                          onClick={() => document.getElementById("file-upload")?.click()}
-                        >
-                          <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
 
-                          {selectedFile ? (
-                            <>
-                              <FileIcon className="h-10 w-10 text-muted-foreground" />
-                              <p className="text-sm font-medium">{selectedFile.name}</p>
-                              <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                      {selectedActions.length > 0 && (
+                        <>
+                          <Label className="text-base">Workflow Order</Label>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Drag and drop to reorder actions in your workflow
+                          </p>
+
+                          <div className="border rounded-md p-2 bg-muted/30" onClick={handleSortableContainerClick}>
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                              <SortableContext
+                                items={selectedActions.map((a) => a.actionId)}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                {selectedActions.map((action, index) => (
+                                  <SortableItem
+                                    key={action.actionId}
+                                    action={action}
+                                    index={index}
+                                    onRemove={() => toggleActionSelection(action)}
+                                  />
+                                ))}
+                              </SortableContext>
+                            </DndContext>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid gap-2">
+                      <Label className="text-base">Select Assets</Label>
+                      <p className="text-sm text-muted-foreground mb-2">Choose assets to run the workflow on</p>
+
+                      <ScrollArea className="h-[200px] border rounded-md p-2">
+                        <div className="grid grid-cols-1 gap-2">
+                          {workflowAssets.map((asset) => (
+                            <div
+                              key={asset.assetId}
+                              className={cn(
+                                "flex items-center space-x-2 border rounded-md p-2",
+                                selectedAssets.some((a) => a.assetId === asset.assetId)
+                                  ? "border-primary bg-primary/5"
+                                  : "",
+                              )}
+                            >
+                              <Checkbox
+                                checked={selectedAssets.some((a) => a.assetId === asset.assetId)}
+                                onCheckedChange={() => toggleAssetSelection(asset)}
+                                id={`asset-${asset.assetId}`}
+                              />
+                              <Label
+                                htmlFor={`asset-${asset.assetId}`}
+                                className="flex-1 flex items-center cursor-pointer"
+                              >
+                                <ServerIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                                <span>{asset.hostname}</span>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+
+                      {selectedAssets.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {selectedAssets.map((asset) => (
+                            <Badge key={asset.assetId} variant="secondary" className="flex items-center gap-1">
+                              <ServerIcon className="h-3 w-3" />
+                              <span>{asset.hostname}</span>
                               <Button
-                                variant="outline"
-                                size="sm"
-                                className="mt-2"
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-4 w-4 ml-1 p-0"
                                 onClick={(e) => {
+                                  e.preventDefault()
                                   e.stopPropagation()
-                                  setSelectedFile(null)
-                                  setFormData({
-                                    ...formData,
-                                    actionPayload: undefined,
-                                  })
+                                  toggleAssetSelection(asset)
                                 }}
                               >
-                                Change File
+                                <XIcon className="h-3 w-3" />
                               </Button>
-                            </>
-                          ) : (
-                            <>
-                              <UploadIcon className="h-10 w-10 text-muted-foreground" />
-                              <p className="text-sm font-medium">Drag & drop a file here or click to browse</p>
-                              <p className="text-xs text-muted-foreground">Upload a file to attach to this action</p>
-                            </>
-                          )}
+                            </Badge>
+                          ))}
                         </div>
-                      </div>
-                    )}
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="actionNote">Note</Label>
-                      <Textarea
-                        id="actionNote"
-                        name="actionNote"
-                        value={formData.actionNote || ""}
-                        onChange={handleInputChange}
-                        placeholder="Add a note about this action"
-                      />
+                      )}
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button type="submit">Save Action</Button>
+                    <Button type="submit" disabled={selectedActions.length === 0 || selectedAssets.length === 0}>
+                      Run Workflow
+                    </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
             </Dialog>
+          )}
+
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button className="mx-1">Create Action</Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <form onSubmit={handleSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Create New Action</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="actionName">Action Name</Label>
+                    <Input
+                      id="actionName"
+                      name="actionName"
+                      value={formData.actionName || ""}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Action Type</Label>
+                    <RadioGroup
+                      value={formData.actionType}
+                      onValueChange={handleActionTypeChange}
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="command" id="command" />
+                        <Label htmlFor="command" className="flex items-center gap-1">
+                          <TerminalIcon className="h-4 w-4" />
+                          Command
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="file" id="file" />
+                        <Label htmlFor="file" className="flex items-center gap-1">
+                          <FileIcon className="h-4 w-4" />
+                          File
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  {formData.actionType === "command" && (
+                    <div className="grid gap-2">
+                      <Label htmlFor="actionPayload">Command</Label>
+                      <Input
+                        id="actionPayload"
+                        name="actionPayload"
+                        value={formData.actionPayload || ""}
+                        onChange={handleInputChange}
+                        placeholder="Enter command"
+                      />
+                    </div>
+                  )}
+                  {formData.actionType === "file" && (
+                    <div className="grid gap-2">
+                      <Label>File</Label>
+                      <div
+                        className={cn(
+                          "border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center gap-2 cursor-pointer",
+                          isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25",
+                          selectedFile ? "bg-muted/50" : "",
+                        )}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => document.getElementById("file-upload")?.click()}
+                      >
+                        <input id="file-upload" type="file" className="hidden" onChange={handleFileChange} />
+
+                        {selectedFile ? (
+                          <>
+                            <FileIcon className="h-10 w-10 text-muted-foreground" />
+                            <p className="text-sm font-medium">{selectedFile.name}</p>
+                            <p className="text-xs text-muted-foreground">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-2"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setSelectedFile(null)
+                                setFormData({
+                                  ...formData,
+                                  actionPayload: undefined,
+                                })
+                              }}
+                            >
+                              Change File
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <UploadIcon className="h-10 w-10 text-muted-foreground" />
+                            <p className="text-sm font-medium">Drag & drop a file here or click to browse</p>
+                            <p className="text-xs text-muted-foreground">Upload a file to attach to this action</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="actionNote">Note</Label>
+                    <Textarea
+                      id="actionNote"
+                      name="actionNote"
+                      value={formData.actionNote || ""}
+                      onChange={handleInputChange}
+                      placeholder="Add a note about this action"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button type="submit">Save Action</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      {loading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-muted-foreground text-lg animate-pulse">
+            Loading actions...
           </div>
         </div>
-        {loading ? (
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-muted-foreground text-lg animate-pulse">
-              Loading actions...
-            </div>
-          </div>
-        ) : !actions || actions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
-            <p>No actions created yet</p>
-            <p className="text-sm">Click the Create Action button to add one</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {actions.map((action, index) => (
-              <Card key={index} className="relative">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{action.actionName}</span>
-                    {action.actionType === "command" ? (
-                      <TerminalIcon className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <FileIcon className="h-5 w-5 text-muted-foreground" />
-                    )}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <UserIcon className="h-3 w-3" />
-                    {action.createdBy} •
-                    <CalendarIcon className="h-3 w-3 ml-1" />
-                    {action.createdAt}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {action.actionType === "command" && action.actionPayload && (
-                    <div className="mb-2">
-                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
-                        {action.actionPayload}
-                      </code>
-                    </div>
+      ) : !actions || actions.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+          <p>No actions created yet</p>
+          <p className="text-sm">Click the Create Action button to add one</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {actions.map((action, index) => (
+            <Card key={index} className="relative">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>{action.actionName}</span>
+                  {action.actionType === "command" ? (
+                    <TerminalIcon className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <FileIcon className="h-5 w-5 text-muted-foreground" />
                   )}
-                  {action.actionType === "file" && action.actionPayload && (
-                    <div className="mb-2 flex items-center gap-2">
-                      <FileIcon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium">{action.actionPayload}</span>
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">{action.actionNote}</p>
-                </CardContent>
-                <div className="absolute bottom-3 right-3">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8 rounded-full hover:bg-primary hover:text-primary-foreground"
-                          onClick={() => {
-                            toast({
-                              title: "Action Ran Successful!",
-                              description: "Action ran on all assets from the previous scan",
-                            });
-                          }}
-                        >
-                          <PlayIcon className="h-4 w-4" />
-                          <span className="sr-only">Run action on last scanned assets</span>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Run action on last scanned assets</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
-    </TooltipProvider >
+                </CardTitle>
+                <CardDescription className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <UserIcon className="h-3 w-3" />
+                  {action.createdBy} •
+                  <CalendarIcon className="h-3 w-3 ml-1" />
+                  {action.createdAt}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {action.actionType === "command" && action.actionPayload && (
+                  <div className="mb-2">
+                    <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm">
+                      {action.actionPayload}
+                    </code>
+                  </div>
+                )}
+                {action.actionType === "file" && action.actionPayload && (
+                  <div className="mb-2 flex items-center gap-2">
+                    <FileIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">{action.actionPayload}</span>
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground">{action.actionNote}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </main>
   )
 }
 
