@@ -8,8 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api-fetch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 
-import { Chip, DeleteChip } from "@/components/Chip";
+import { RemovableBadge } from "@/components/DeleteBadge";
 
 export type Flag = {
     label: string;
@@ -44,6 +46,9 @@ export function LaunchScanDialog() {
     const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
     const [flagStates, setFlagStates] = useState<Record<string, { enabled: boolean; value: string | boolean | string[] }>>({});
     const [inputBuffer, setInputBuffer] = useState<Record<string, string>>({});
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [showConfirmPopover, setShowConfirmPopover] = useState(false);
     const hasFetched = useRef(false);
 
     useEffect(() => {
@@ -81,8 +86,6 @@ export function LaunchScanDialog() {
         if (step < 3) {
             setDirection("forward");
             setStep(prev => prev + 1);
-        } else {
-            launchScan();
         }
     };
 
@@ -154,19 +157,19 @@ export function LaunchScanDialog() {
     const launchScan = async () => {
         try {
             const flags = Object.entries(flagStates)
-            .filter((entry) => entry[1].enabled)
-            .map((entry) => {
-              const label = entry[0];
-              const { value } = entry[1];
-              const scannerFlag = scannerFlags[selectedScanner!]?.flags.find(f => f.label === label);
-          
-              return {
-                label,
-                inputType: scannerFlag?.inputType || (Array.isArray(value) ? "strings" : typeof value === "boolean" ? "boolean" : "string"),
-                required: scannerFlag?.required ?? false,
-                value,
-              };
-            });
+                .filter((entry) => entry[1].enabled)
+                .map((entry) => {
+                    const label = entry[0];
+                    const { value } = entry[1];
+                    const scannerFlag = scannerFlags[selectedScanner!]?.flags.find(f => f.label === label);
+
+                    return {
+                        label,
+                        inputType: scannerFlag?.inputType || (Array.isArray(value) ? "strings" : typeof value === "boolean" ? "boolean" : "string"),
+                        required: scannerFlag?.required ?? false,
+                        value,
+                    };
+                });
 
             toast({ title: "Scan Launched!", description: "Please wait..." });
 
@@ -178,8 +181,8 @@ export function LaunchScanDialog() {
             if (!response.ok) throw new Error("Failed to launch scan.");
 
             localStorage.setItem("scanSuccess", JSON.stringify({ title: "Scan Finished Successfully!", description: "Scan completed." }));
-            window.location.reload();
         } catch (error) {
+            resetDialog();
             const errorMessage = error instanceof Error ? error.message : "Scan launch failed.";
             toast({ variant: "destructive", title: "Error", description: errorMessage });
         }
@@ -221,10 +224,10 @@ export function LaunchScanDialog() {
                         <>
                             <div className="flex flex-wrap gap-2">
                                 {(value as string[]).map((item, idx) => (
-                                    <DeleteChip
+                                    <RemovableBadge
                                         key={idx}
                                         label={item}
-                                        onDelete={() => handleFlagValueChange(label, (value as string[]).filter(val => val !== item))}
+                                        onRemove={() => handleFlagValueChange(label, (value as string[]).filter(val => val !== item))}
                                     />
                                 ))}
                             </div>
@@ -244,16 +247,20 @@ export function LaunchScanDialog() {
     };
 
     const renderAssets = () => (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-4">
             {assets.map(asset => (
-                <Chip
+                <Badge
                     key={asset}
-                    label={asset}
                     onClick={() => setSelectedAssets(prev => prev.includes(asset) ? prev.filter(a => a !== asset) : [...prev, asset])}
-                    className={selectedAssets.includes(asset)
-                        ? 'bg-indigo-600 text-white scale-105 shadow-lg'
-                        : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105 cursor-pointer transition-all duration-200 ease-in-out'}
-                />
+                    className={
+                        `rounded-full cursor-pointer transition-all duration-200 ease-in-out ` +
+                        (selectedAssets.includes(asset)
+                            ? 'bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 hover:bg-slate-700 dark:hover:bg-slate-300 scale-105 shadow-md'
+                            : 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 hover:scale-105')
+                    }
+                >
+                    {asset}
+                </Badge>
             ))}
         </div>
     );
@@ -262,11 +269,11 @@ export function LaunchScanDialog() {
         <div className="space-y-4">
             <div className="border-b-2 border-b-gray-300 pb-2 mb-2">
                 <h3 className="font-bold mb-1">Scanner</h3>
-                <Chip label={selectedScanner || ""} />
+                <Badge className="rounded-full capitalize" variant="outline">{selectedScanner}</Badge>
             </div>
             <div className="border-b-2 border-b-gray-300 pb-2 mb-2">
                 <h3 className="font-bold mb-1">Assets</h3>
-                <div className="flex flex-wrap gap-2">{selectedAssets.map(asset => <Chip key={asset} label={asset} />)}</div>
+                <div className="flex flex-wrap gap-2">{selectedAssets.map(asset => <Badge className="rounded-full" key={asset} variant="outline">{asset}</Badge>)}</div>
             </div>
             <div className="border-b-2 border-b-gray-300 pb-2 mb-2">
                 <h3 className="font-bold mb-1">Flags</h3>
@@ -277,8 +284,9 @@ export function LaunchScanDialog() {
                             <span>{label}</span>
                             <div className="flex flex-wrap gap-2 mt-1">
                                 {Array.isArray(value)
-                                    ? value.map((v, idx) => <Chip key={idx} label={v} />)
-                                    : <Chip label={typeof value === "boolean" ? (value ? "True" : "False") : String(value)} />}
+                                    ? value.map((v, idx) => <Badge className="rounded-full" variant="outline" key={idx}> {v} </Badge>)
+                                    : <Badge className="rounded-full" variant="outline"> {typeof value === "boolean" ? (value ? "True" : "False") : String(value)} </Badge>
+                                }
                             </div>
                         </div>
                     ))}
@@ -340,36 +348,87 @@ export function LaunchScanDialog() {
                     </motion.div>
                 </AnimatePresence>
 
-                <DialogFooter>
-                    <Button variant="outline" onClick={resetDialog}>Cancel</Button>
-                    {step > 1 && <Button variant="outline" onClick={handleBack}>Back</Button>}
+                <DialogFooter className="sm:justify-start">
+                    <div className="flex w-full justify-between items-center">
+                        <Button variant="outline" onClick={resetDialog} disabled={isLoading}>Cancel</Button>
+                    </div>
+                    <div className="flex gap-2">
+                        {step > 1 && <Button variant="outline" onClick={handleBack} disabled={isLoading}>Back</Button>}
 
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div>
-                                <Button
-                                    onClick={(e) => {
-                                        if (!isValid) {
-                                            e.preventDefault();
-                                        } else {
-                                            handleNext();
-                                        }
-                                    }}
-                                    className={!isValid ? "opacity-50 cursor-not-allowed" : ""}
+                        {step === 3 ? (
+                            <Popover open={showConfirmPopover} onOpenChange={setShowConfirmPopover} modal={true}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        className={`flex items-center gap-2 transition-opacity`}
+                                        onClick={() => setShowConfirmPopover(true)}
+                                        disabled={showConfirmPopover || isLoading}
+                                    >
+                                        Launch
+                                        {isLoading && (
+                                            <span className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        )}
+                                    </Button>
+                                </PopoverTrigger>
+
+                                <PopoverContent
+                                    className="w-64"
+                                    side="top"
+                                    align="center"
+                                    onOpenAutoFocus={(e) => e.preventDefault()}
                                 >
-                                    {step === 3 ? "Launch" : "Next"}
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-
-                        {!isValid && (
-                            <TooltipContent>
-                                {validationError || "Please complete required fields to continue."}
-                            </TooltipContent>
+                                    <p className="mb-4 text-sm">
+                                        Are you sure you want to launch the scan? This action cannot be undone.
+                                    </p>
+                                    <div className="flex justify-end gap-2">
+                                        <Button variant="outline" onClick={() => setShowConfirmPopover(false)}>
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            onClick={async () => {
+                                                setShowConfirmPopover(false);
+                                                setIsLoading(true);
+                                                await launchScan();
+                                            }}
+                                        >
+                                            Confirm
+                                        </Button>
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                        ) : (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div>
+                                        <Button
+                                            onClick={async () => {
+                                                if (!isValid || isLoading) return;
+                                                setIsLoading(true);
+                                                try {
+                                                    await handleNext();
+                                                } finally {
+                                                    setIsLoading(false);
+                                                }
+                                            }}
+                                            disabled={!isValid || isLoading}
+                                            className="flex items-center gap-2"
+                                        >
+                                            Next
+                                            {isLoading && (
+                                                <span className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                {!isValid && (
+                                    <TooltipContent>
+                                        {validationError || "Please complete required fields to continue."}
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
                         )}
-                    </Tooltip>
+                    </div>
                 </DialogFooter>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

@@ -9,7 +9,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api-fetch";
 
@@ -88,7 +88,7 @@ export function NoteDialogCell({ initialNote, scanID }: NoteDialogCellProps) {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="outline" size="icon">
-                        <Eye className="h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                     </Button>
                 </DialogTrigger>
 

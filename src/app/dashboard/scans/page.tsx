@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/table";
 import { NoteDialogCell } from "@/components/NotesDialog";
 import { LaunchScanDialog } from "@/components/LaunchScanDialog";
+import { ViewScanButton } from "@/components/ViewScan";
+
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
@@ -151,7 +153,13 @@ const columns: ColumnDef<Scan>[] = [
     cell: ({ row }) => {
       const id = row.original.id as string;
       const note = row.original.notes as string;
-      return <NoteDialogCell initialNote={note} scanID={id}/>;
+
+      return (
+        <>
+          <ViewScanButton id={id} />
+          <NoteDialogCell initialNote={note} scanID={id} />
+        </>
+      );
     },
   },
 ];

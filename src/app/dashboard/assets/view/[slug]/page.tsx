@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
+import { BackButton } from "@/components/BackButton";
 
 export type AssetDetails = {
   assetId: string;
@@ -91,10 +90,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   return (
     <div className="max-w-5xl mx-auto mt-8 p-8">
       <div className="mb-6">
-        <Link href="/dashboard/assets" className="flex items-center text-sm font-medium text-primary hover:underline">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Assets
-        </Link>
+        <BackButton />
       </div>
       <Card>
         <CardHeader className="text-2xl">

@@ -184,7 +184,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
               </span>
             )}
 
-            <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
+            <div className={`inline-flex rounded-sm ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
               {severity}
             </div>
           </div>
@@ -197,6 +197,14 @@ function DataTable({ data }: { data: Vulnerability[] }) {
       cell: ({ row }) => {
         const vulnID = row.getValue("vulnerability") as string;
         return <VulnerabilityCell vulnID={vulnID} />;
+      },
+    },
+    {
+      accessorKey: "assetsAffected",
+      header: "Assets Affected",
+      cell: ({ row }) => {
+        const assets = row.getValue("assetsAffected") as assetsAffected[];
+        return <AssetsAffectedCell assets={assets} />;
       },
     },
     {
@@ -217,7 +225,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
         return (
           <div className="inline-block">
             <div className="inline-flex items-center gap-2">
-              <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
+              <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`}></span>
 
               <div className="font-semibold capitalize">
                 {status}
@@ -225,14 +233,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             </div>
           </div>
         );
-      },
-    },
-    {
-      accessorKey: "assetsAffected",
-      header: "Assets Affected",
-      cell: ({ row }) => {
-        const assets = row.getValue("assetsAffected") as assetsAffected[];
-        return <AssetsAffectedCell assets={assets} />;
       },
     },
     {
