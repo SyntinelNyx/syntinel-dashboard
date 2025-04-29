@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/table"
 import { apiFetch } from '@/lib/api-fetch';
 
-// Update type for snapshot data to match the provided structure
 type Snapshot = {
   id: string;
   endTime: string;
@@ -57,7 +56,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   const handleCreateSnapshot = async () => {
     try {
       setIsCreatingSnapshot(true);
-      // This is where you would make an API call to create a snapshot
+
       await apiFetch(`/assets/create-snapshot/${slug}`, { method: 'POST' });
       
       toast({
@@ -65,7 +64,6 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         description: "Snapshot created successfully",
       });
       
-      // Refresh the snapshots list
       fetchSnapshots();
     } catch (error) {
       console.error('Error creating snapshot:', error);
@@ -79,12 +77,10 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     }
   };
 
-  // Function to format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
-  // Function to format size
   const formatSize = (sizeInBytes: string | number) => {
     const bytes = typeof sizeInBytes === 'string' ? parseInt(sizeInBytes, 10) : sizeInBytes;
     
