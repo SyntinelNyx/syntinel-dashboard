@@ -39,6 +39,7 @@ import { apiFetch } from "@/lib/api-fetch";
 type UptimeData = {
   time: string;
   activeAssets: number;
+  originalDate?: Date;
 };
 
 type TelemetryData = {
@@ -49,6 +50,7 @@ type TelemetryData = {
 };
 
 type ChartType = "line" | "bar" | "area";
+type SortBy = "month" | "week" | "day";
 
 const chartConfig = {
   activeAssets: {
@@ -71,10 +73,12 @@ const chartConfig = {
 
 export function TelemetryChart() {
   const [chartType, setChartType] = useState<ChartType>("line");
+  const [sortBy, setSortBy] = useState<SortBy>("day");
   const [UptimeData, setUptimeData] = useState<UptimeData[]>([]);
   const [TelemetryData, setTelemetryData] = useState<TelemetryData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalAssets, setTotalAssets] = useState<number>(150);
 
   useEffect(() => {
     async function fetchTelemetryData() {
@@ -84,6 +88,7 @@ export function TelemetryChart() {
       try {
         // Fetch data based on chart type
         let endpoint = "/telemetry";
+        let timeframeParam = "";
 
         if (chartType === "line" || chartType === "bar") {
           endpoint += "-uptime";
@@ -99,12 +104,49 @@ export function TelemetryChart() {
           }
 
           // Format data for uptime charts
-          const formattedData = json.map((item: any) => ({
-            time: formatTimeDisplay(item.TelemetryTime || item.CheckTime),
-            activeAssets: item.AssetsUp,
-          }));
+          const formattedData = json
+            .map((item: any) => ({
+              time: formatSortTimeDisplay(
+                item.TelemetryTime || item.CheckTime,
+                sortBy,
+              ),
+              activeAssets: item.AssetsUp,
+              originalDate: new Date(item.TelemetryTime || item.CheckTime),
+            }))
+            .sort(
+              (a, b) => a.originalDate!.getTime() - b.originalDate!.getTime(),
+            );
 
-          setUptimeData(formattedData);
+          // Filter data based on the selected time range
+          const now = new Date();
+          const filteredData = formattedData.filter((item: UptimeData) => {
+            if (!item.originalDate) return false;
+
+            switch (sortBy) {
+              case "month":
+                // Include data from the current month
+                return (
+                  item.originalDate.getMonth() === now.getMonth() &&
+                  item.originalDate.getFullYear() === now.getFullYear()
+                );
+              case "week":
+                // Include data from the last 7 days
+                const weekAgo = new Date();
+                weekAgo.setDate(now.getDate() - 7);
+                return item.originalDate >= weekAgo;
+              case "day":
+              default:
+                // Include data from the last 24 hours
+                const dayAgo = new Date();
+                dayAgo.setHours(now.getHours() - 24);
+                return item.originalDate >= dayAgo;
+            }
+          });
+
+          // Group and aggregate data based on sortBy
+          const groupedData = groupDataBySortOption(filteredData, sortBy);
+
+          setUptimeData(groupedData);
         } else if (chartType === "area") {
           endpoint += "-usage-all";
 
@@ -129,15 +171,44 @@ export function TelemetryChart() {
 
         // Fallback to mock data on error
         if (chartType === "line" || chartType === "bar") {
-          setUptimeData([
-            { time: "00:00", activeAssets: 124 },
-            { time: "04:00", activeAssets: 122 },
-            { time: "08:00", activeAssets: 130 },
-            { time: "12:00", activeAssets: 142 },
-            { time: "16:00", activeAssets: 145 },
-            { time: "20:00", activeAssets: 148 },
-            { time: "24:00", activeAssets: 140 },
-          ]);
+          const now = new Date();
+          const mockData = [
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 124,
+              originalDate: new Date(new Date(now).setHours(0, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 122,
+              originalDate: new Date(new Date(now).setHours(4, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 130,
+              originalDate: new Date(new Date(now).setHours(8, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 142,
+              originalDate: new Date(new Date(now).setHours(12, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 145,
+              originalDate: new Date(new Date(now).setHours(16, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 148,
+              originalDate: new Date(new Date(now).setHours(20, 0, 0, 0)),
+            },
+            {
+              time: formatSortTimeDisplay(now.toISOString(), sortBy),
+              activeAssets: 140,
+              originalDate: new Date(new Date(now).setHours(23, 59, 0, 0)),
+            },
+          ];
         } else {
           setTelemetryData([
             { time: "00:00", cpu: 45, memory: 30, disk: 20 },
@@ -155,7 +226,7 @@ export function TelemetryChart() {
     }
 
     fetchTelemetryData();
-  }, [chartType]); // Re-fetch when chart type changes
+  }, [chartType, sortBy]); // Re-fetch when chart type changes
 
   const formatTimeDisplay = (timeString: string): string => {
     try {
@@ -175,6 +246,106 @@ export function TelemetryChart() {
       console.warn(`Could not parse date: ${timeString}`, e);
       return timeString; // Return original if parsing fails
     }
+  };
+
+  const formatSortTimeDisplay = (
+    timeString: string,
+    sortOption: SortBy,
+  ): string => {
+    try {
+      const date = new Date(timeString);
+
+      if (isNaN(date.getTime())) {
+        throw new Error("Invalid date format");
+      }
+
+      switch (sortOption) {
+        case "month":
+          // For month view, show day of month (Apr 15)
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          });
+        case "week":
+          // For week view, show day of week (Mon, Tue, etc.)
+          return date.toLocaleDateString("en-US", {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          });
+        case "day":
+        default:
+          // For day view, show hour (12 AM, 1 PM, etc.)
+          return date.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            hour12: true,
+          });
+      }
+    } catch (e) {
+      console.warn(`Could not parse date: ${timeString}`, e);
+      return timeString;
+    }
+  };
+
+  // Function to group data by the selected sort option
+  const groupDataBySortOption = (
+    data: UptimeData[],
+    sortOption: SortBy,
+  ): UptimeData[] => {
+    if (!data.length) return [];
+
+    const groupedMap = new Map<
+      string,
+      { count: number; totalAssets: number; date: Date }
+    >();
+
+    // Group data points
+    data.forEach((item) => {
+      if (!item.originalDate) return;
+
+      let key: string;
+      const date = item.originalDate;
+
+      switch (sortOption) {
+        case "month":
+          // For month view, group by day in that month (YYYY-MM-DD)
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+          break;
+        case "week":
+          // For week view, group by day (YYYY-MM-DD) for the past 7 days
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+          break;
+        case "day":
+        default:
+          // For day view, group by hour (YYYY-MM-DD HH) for the past 24 hours
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}`;
+          break;
+      }
+
+      if (!groupedMap.has(key)) {
+        groupedMap.set(key, {
+          count: 0,
+          totalAssets: 0,
+          date: new Date(date), // Store a reference date for this group
+        });
+      }
+
+      const group = groupedMap.get(key)!;
+      group.count++;
+      group.totalAssets += item.activeAssets;
+    });
+
+    // Convert grouped data to array
+    const result = Array.from(groupedMap.entries()).map(([key, value]) => ({
+      time: formatSortTimeDisplay(value.date.toISOString(), sortBy),
+      activeAssets: Math.round(value.totalAssets / value.count), // Average active assets
+      originalDate: value.date,
+    }));
+
+    // Sort by date
+    return result.sort(
+      (a, b) => a.originalDate!.getTime() - b.originalDate!.getTime(),
+    );
   };
 
   const renderChart = () => {
@@ -216,11 +387,16 @@ export function TelemetryChart() {
             >
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
+                dataKey="time"
                 label={{ value: "Time", position: "insideBottom", offset: -5 }}
               />
               <YAxis
-                label={{ value: 'Active Assets', angle: -90, position: 'insideLeft' }} 
-                domain={[0, totalAssets || 'auto']}
+                label={{
+                  value: "Active Assets",
+                  angle: -90,
+                  position: "insideLeft",
+                }}
+                domain={[0, totalAssets || "auto"]}
               />
               <ChartTooltip />
               <Line
@@ -368,19 +544,36 @@ export function TelemetryChart() {
               : "Active assets over time"}
           </CardDescription>
         </div>
-        <Select
-          value={chartType}
-          onValueChange={(value) => setChartType(value as ChartType)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select chart type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="line">Line Chart</SelectItem>
-            <SelectItem value="bar">Bar Chart</SelectItem>
-            <SelectItem value="area">Telemetry Chart</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          {(chartType === "line" || chartType === "bar") && (
+            <Select
+              value={sortBy}
+              onValueChange={(value) => setSortBy(value as SortBy)}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Group by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">By Month</SelectItem>
+                <SelectItem value="week">By Week</SelectItem>
+                <SelectItem value="day">By Day</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+          <Select
+            value={chartType}
+            onValueChange={(value) => setChartType(value as ChartType)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select chart type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="line">Line Chart</SelectItem>
+              <SelectItem value="bar">Bar Chart</SelectItem>
+              <SelectItem value="area">Telemetry Chart</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </CardHeader>
       <CardContent className="px-2 pt-2">
         <div className="h-[350px]">{renderChart()}</div>
