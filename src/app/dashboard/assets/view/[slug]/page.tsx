@@ -13,7 +13,6 @@ import {
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
@@ -56,15 +55,6 @@ type UtilizationData = {
   disk: number;
 };
 
-const chartData = [
-  { time: "08:00", cpu: 45, memory: 30 },
-  { time: "10:00", cpu: 65, memory: 40 },
-  { time: "12:00", cpu: 75, memory: 55 },
-  { time: "14:00", cpu: 85, memory: 60 },
-  { time: "16:00", cpu: 70, memory: 45 },
-  { time: "18:00", cpu: 55, memory: 35 },
-];
-
 const chartConfig = {
   cpu: {
     label: "CPU Usage",
@@ -73,6 +63,10 @@ const chartConfig = {
   memory: {
     label: "Memory Usage",
     color: "hsl(var(--chart-2))",
+  },
+  disk: {
+    label: "Disk Usage",
+    color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig;
 
@@ -119,14 +113,14 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         // Format the data for the chart
         const formattedData = json.map((item: any) => ({
           time: new Date(item.TelemetryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          cpu: Math.round(item.CpuUsage), // Already in percentage
-          memory: Math.round(item.MemUsedPercent), // Already in percentage
-          disk: Math.round(item.DiskUsedPercent), // Already in percentage
+          cpu: Math.round(item.CpuUsage),
+          memory: Math.round(item.MemUsedPercent), 
+          disk: Math.round(item.DiskUsedPercent), 
         }));
         
         setUtilizationData(formattedData);
       } catch (error) {
-        // Fallback to dummy data if API call fails
+        // Dumy data for testing
         setUtilizationData([
           { time: "08:00", cpu: 45, memory: 30, disk: 20 },
           { time: "10:00", cpu: 65, memory: 40, disk: 22 },
@@ -184,7 +178,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     : "No data available";
 
     return (
-      <div className="max-w-5xl mx-auto mt-8 p-8">
+      <div className="max-w-6xl mx-auto mt-8 p-8">
         <div className="mb-6">
           <Link href="/dashboard/assets" className="flex items-center text-sm font-medium text-primary hover:underline">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -193,8 +187,8 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         </div>
     
         {/* Usage Analytics Chart */}
-        <div className="mb-8">
-        <Card>
+        <div className="mb-8 w-full">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Resource Utilization</CardTitle>
             <CardDescription>
@@ -213,11 +207,12 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
                   data={utilizationData}
                   margin={{
                     top: 10,
-                    right: 30,
-                    left: 10,
-                    bottom: 0,
+                    right: 0,
+                    left: 0, 
+                    bottom: 10,
                   }}
-                  height={300}
+                  height={350} // Increased height
+                  width={900} // Explicit width
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
@@ -236,7 +231,27 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
                   />
                   <ChartTooltip
                     cursor={false}
-                    content={<ChartTooltipContent indicator="line" />}
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-background border rounded-md shadow-md p-3">
+                            <p className="font-medium text-sm">{`Time: ${label}`}</p>
+                            {payload.map((entry, index) => (
+                              <div key={`item-${index}`} className="flex items-center gap-2 mt-1">
+                                <div 
+                                  className="h-3 w-3 rounded-full" 
+                                  style={{ backgroundColor: entry.color }}
+                                />
+                                <p style={{ color: entry.color }}>
+                                  {`${entry.name}: ${entry.value}%`}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
                   <Area
                     dataKey="disk"
