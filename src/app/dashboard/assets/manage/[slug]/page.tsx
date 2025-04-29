@@ -25,33 +25,34 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  useEffect(() => {
-    fetchSnapshots();
-  }, [slug]);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
-  const fetchSnapshots = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch snapshots: ${response.status}`);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch snapshots: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setSnapshots(data);
+      } catch (error) {
+        console.error('Error fetching snapshots:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load snapshots",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
-      
-      const data = await response.json();
-      setSnapshots(data);
-    } catch (error) {
-      console.error('Error fetching snapshots:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load snapshots",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
+  
+    fetchData();
+  }, [slug, toast]);
 
   const handleCreateSnapshot = async () => {
     try {
@@ -97,11 +98,29 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     }
   };
 
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
 
+  const sortedSnapshots = [...snapshots].sort((a, b) => {
+    if (!sortConfig) return 0;
+
+    const { key, direction } = sortConfig;
+    const aValue = key === 'size' ? parseInt(a[key], 10) : new Date(a[key]).getTime();
+    const bValue = key === 'size' ? parseInt(b[key], 10) : new Date(b[key]).getTime();
+
+    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
+    <div className="p-4 max-w-full mx-auto w-full">
+    <div className="mb-6"></div>
   
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
@@ -119,15 +138,18 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Snapshot ID</TableHead>
-                <TableHead>Date Taken</TableHead>
-                <TableHead>Size</TableHead>
+                {/* <TableHead>Snapshot ID</TableHead> */}
+                <TableHead onClick={() => handleSort('endTime')} className="cursor-pointer">
+                  Date Taken {sortConfig?.key === 'endTime' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </TableHead>
+                <TableHead onClick={() => handleSort('size')} className="cursor-pointer">
+                  Size {sortConfig?.key === 'size' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {snapshots.map((snapshot) => (
+              {sortedSnapshots.map((snapshot) => (
                 <TableRow key={snapshot.id}>
-                  <TableCell>{snapshot.id}</TableCell>
                   <TableCell>{formatDate(snapshot.endTime)}</TableCell>
                   <TableCell>{formatSize(snapshot.size)}</TableCell>
                 </TableRow>
