@@ -296,13 +296,11 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(vulnerability.id)}
+                onClick={() => navigator.clipboard.writeText(vulnerability.vulnerability)}
               >
                 Copy Vulnerability ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>View Details</DropdownMenuItem>
-              <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -331,7 +329,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl user-select: text ">
       <h1 className="mt-12 text-2xl font-bold">Vulnerabilities</h1>
       <div className="mt-2 flex items-center justify-center py-4">
         <Input
