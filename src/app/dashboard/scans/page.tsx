@@ -43,6 +43,7 @@ type Scan = {
   scanDate: string;
   scannerName: string;
   scannedBy: string;
+  notes: string;
 };
 
 export default function ScanPage() {
@@ -148,8 +149,9 @@ const columns: ColumnDef<Scan>[] = [
     accessorKey: "actions",
     header: "Actions",
     cell: ({ row }) => {
-      const note = row.getValue("notes") as string;
-      return <NoteDialogCell initialNote={note} />;
+      const id = row.original.id as string;
+      const note = row.original.notes as string;
+      return <NoteDialogCell initialNote={note} scanID={id}/>;
     },
   },
 ];
