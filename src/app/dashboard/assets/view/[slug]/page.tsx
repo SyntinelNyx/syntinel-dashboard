@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import { TrendingUp, ArrowLeft } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import {
   ChartConfig,
   ChartContainer,
