@@ -49,6 +49,8 @@ export function LaunchScanDialog() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmPopover, setShowConfirmPopover] = useState(false);
+
+  const [isDisabled, setIsDisabled] = useState(true);
   const hasFetched = useRef(false);
 
   useEffect(() => {
@@ -61,9 +63,11 @@ export function LaunchScanDialog() {
         setScanners(data.validScanners);
         setAssets(data.validAssets);
         setScannerFlags(data.scannerFlags);
+        setIsDisabled(false);
       })
       .catch((error) => {
         const errorMessage = error instanceof Error ? error.message : "Failed to load scan parameters.";
+        setIsDisabled(true);
         toast({ variant: "destructive", title: "Error", description: errorMessage });
       });
   }, [toast]);
@@ -298,138 +302,163 @@ export function LaunchScanDialog() {
   const validationError = getValidationError();
   const isValid = validationError === null;
 
+  if (isDisabled) { return <div className="p-4" />; }
+
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button onClick={() => setIsDialogOpen(true)}>Start New Scan</Button>
-      </DialogTrigger>
-      <DialogContent className="overflow-visible max-h-[85vh]">
-        <DialogHeader>
-          <DialogTitle>Configure Scan</DialogTitle>
-          <DialogDescription>
-            {step === 1 ? "Select a scanner and set flags." : step === 2 ? "Choose assets." : "Review and launch the scan."}
-          </DialogDescription>
-        </DialogHeader>
+    !isDisabled && (
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button onClick={() => setIsDialogOpen(true)}>Start New Scan</Button>
+        </DialogTrigger>
+        <DialogContent className="overflow-visible max-h-[85vh]">
+          <DialogHeader>
+            <DialogTitle>Configure Scan</DialogTitle>
+            <DialogDescription>
+              {step === 1
+                ? "Select a scanner and set flags."
+                : step === 2
+                  ? "Choose assets."
+                  : "Review and launch the scan."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={step}
-            custom={direction}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            variants={{
-              initial: (dir) => ({ x: dir === "forward" ? -20 : 20, opacity: 0 }),
-              animate: { x: 0, opacity: 1 },
-              exit: (dir) => ({ x: dir === "forward" ? 20 : -20, opacity: 0 }),
-            }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          >
-            {step === 1 && (
-              <>
-                <Select value={selectedScanner || ""} onValueChange={setSelectedScanner}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a scanner">
-                      {selectedScanner && selectedScanner.charAt(0).toUpperCase() + selectedScanner.slice(1)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {scanners.map(scanner => (
-                      <SelectItem key={scanner} value={scanner} className="capitalize">
-                        {scanner}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {renderFlags()}
-              </>
-            )}
-            {step === 2 && renderAssets()}
-            {step === 3 && renderSummary()}
-          </motion.div>
-        </AnimatePresence>
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={step}
+              custom={direction}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={{
+                initial: (dir) => ({
+                  x: dir === "forward" ? -20 : 20,
+                  opacity: 0,
+                }),
+                animate: { x: 0, opacity: 1 },
+                exit: (dir) => ({
+                  x: dir === "forward" ? 20 : -20,
+                  opacity: 0,
+                }),
+              }}
+              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+            >
+              {step === 1 && (
+                <>
+                  <Select value={selectedScanner || ""} onValueChange={setSelectedScanner}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a scanner">
+                        {selectedScanner &&
+                          selectedScanner.charAt(0).toUpperCase() + selectedScanner.slice(1)}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {scanners.map((scanner) => (
+                        <SelectItem key={scanner} value={scanner} className="capitalize">
+                          {scanner}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {renderFlags()}
+                </>
+              )}
+              {step === 2 && renderAssets()}
+              {step === 3 && renderSummary()}
+            </motion.div>
+          </AnimatePresence>
 
-        <DialogFooter className="sm:justify-start">
-          <div className="flex w-full justify-between items-center">
-            <Button variant="outline" onClick={resetDialog} disabled={isLoading}>Cancel</Button>
-          </div>
-          <div className="flex gap-2">
-            {step > 1 && <Button variant="outline" onClick={handleBack} disabled={isLoading}>Back</Button>}
+          <DialogFooter className="sm:justify-start">
+            <div className="flex w-full justify-between items-center">
+              <Button variant="outline" onClick={resetDialog} disabled={isLoading}>
+                Cancel
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              {step > 1 && (
+                <Button variant="outline" onClick={handleBack} disabled={isLoading}>
+                  Back
+                </Button>
+              )}
 
-            {step === 3 ? (
-              <Popover open={showConfirmPopover} onOpenChange={setShowConfirmPopover} modal={true}>
-                <PopoverTrigger asChild>
-                  <Button
-                    className={`flex items-center gap-2 transition-opacity`}
-                    onClick={() => setShowConfirmPopover(true)}
-                    disabled={showConfirmPopover || isLoading}
-                  >
-                    Launch
-                    {isLoading && (
-                      <span className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    )}
-                  </Button>
-                </PopoverTrigger>
-
-                <PopoverContent
-                  className="w-64"
-                  side="top"
-                  align="center"
-                  onOpenAutoFocus={(e) => e.preventDefault()}
+              {step === 3 ? (
+                <Popover
+                  open={showConfirmPopover}
+                  onOpenChange={setShowConfirmPopover}
+                  modal={true}
                 >
-                  <p className="mb-4 text-sm">
-                    Are you sure you want to launch the scan? This action cannot be undone.
-                  </p>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setShowConfirmPopover(false)}>
-                      Cancel
-                    </Button>
+                  <PopoverTrigger asChild>
                     <Button
-                      onClick={async () => {
-                        setShowConfirmPopover(false);
-                        setIsLoading(true);
-                        await launchScan();
-                      }}
+                      className="flex items-center gap-2 transition-opacity"
+                      onClick={() => setShowConfirmPopover(true)}
+                      disabled={showConfirmPopover || isLoading}
                     >
-                      Confirm
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      onClick={async () => {
-                        if (!isValid || isLoading) return;
-                        setIsLoading(true);
-                        try {
-                          await handleNext();
-                        } finally {
-                          setIsLoading(false);
-                        }
-                      }}
-                      disabled={!isValid || isLoading}
-                      className="flex items-center gap-2"
-                    >
-                      Next
+                      Launch
                       {isLoading && (
                         <span className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       )}
                     </Button>
-                  </div>
-                </TooltipTrigger>
-                {!isValid && (
-                  <TooltipContent>
-                    {validationError || "Please complete required fields to continue."}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            )}
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog >
+                  </PopoverTrigger>
+
+                  <PopoverContent
+                    className="w-64"
+                    side="top"
+                    align="center"
+                    onOpenAutoFocus={(e) => e.preventDefault()}
+                  >
+                    <p className="mb-4 text-sm">
+                      Are you sure you want to launch the scan? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setShowConfirmPopover(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          setShowConfirmPopover(false);
+                          setIsLoading(true);
+                          await launchScan();
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        onClick={async () => {
+                          if (!isValid || isLoading) return;
+                          setIsLoading(true);
+                          try {
+                            await handleNext();
+                          } finally {
+                            setIsLoading(false);
+                          }
+                        }}
+                        disabled={!isValid || isLoading}
+                        className="flex items-center gap-2"
+                      >
+                        Next
+                        {isLoading && (
+                          <span className="ml-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isValid && (
+                    <TooltipContent>
+                      {validationError || "Please complete required fields to continue."}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
   );
 }
