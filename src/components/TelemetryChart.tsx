@@ -12,7 +12,6 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ResponsiveContainer,
 } from "recharts";
 import {
   Card,
@@ -86,9 +85,8 @@ export function TelemetryChart() {
       setError(null);
 
       try {
-        // Fetch data based on chart type
+
         let endpoint = "/telemetry";
-        let timeframeParam = "";
 
         if (chartType === "line" || chartType === "bar") {
           endpoint += "-uptime";
@@ -96,7 +94,6 @@ export function TelemetryChart() {
           const response = await apiFetch(endpoint);
           const json = await response.json();
 
-          // Get total assets value if available
           if (json.TotalAssets !== undefined) {
             setTotalAssets(json.TotalAssets);
           } else if (json[0]?.TotalAssets !== undefined) {
@@ -105,13 +102,13 @@ export function TelemetryChart() {
 
           // Format data for uptime charts
           const formattedData = json
-            .map((item: any) => ({
+            .map((item: { TelemetryTime?: string; CheckTime?: string; AssetsUp: number }) => ({
               time: formatSortTimeDisplay(
-                item.TelemetryTime || item.CheckTime,
+                item.TelemetryTime ?? item.CheckTime ?? "",
                 sortBy,
               ),
               activeAssets: item.AssetsUp,
-              originalDate: new Date(item.TelemetryTime || item.CheckTime),
+              originalDate: new Date(item.TelemetryTime || item.CheckTime || 0),
             }))
             .sort(
               (a, b) => a.originalDate!.getTime() - b.originalDate!.getTime(),
@@ -124,26 +121,22 @@ export function TelemetryChart() {
 
             switch (sortBy) {
               case "month":
-                // Include data from the current month
                 return (
                   item.originalDate.getMonth() === now.getMonth() &&
                   item.originalDate.getFullYear() === now.getFullYear()
                 );
               case "week":
-                // Include data from the last 7 days
                 const weekAgo = new Date();
                 weekAgo.setDate(now.getDate() - 7);
                 return item.originalDate >= weekAgo;
               case "day":
               default:
-                // Include data from the last 24 hours
                 const dayAgo = new Date();
                 dayAgo.setHours(now.getHours() - 24);
                 return item.originalDate >= dayAgo;
             }
           });
 
-          // Group and aggregate data based on sortBy
           const groupedData = groupDataBySortOption(filteredData, sortBy);
 
           setUptimeData(groupedData);
@@ -226,14 +219,13 @@ export function TelemetryChart() {
     }
 
     fetchTelemetryData();
-  }, [chartType, sortBy]); // Re-fetch when chart type changes
+  }, [chartType, sortBy]); 
 
   const formatTimeDisplay = (timeString: string): string => {
     try {
       // Handle ISO format: "2025-04-29T00:00:00-07:00"
       const date = new Date(timeString);
 
-      // Check if date is valid
       if (isNaN(date.getTime())) {
         throw new Error("Invalid date format");
       }
@@ -244,7 +236,7 @@ export function TelemetryChart() {
       });
     } catch (e) {
       console.warn(`Could not parse date: ${timeString}`, e);
-      return timeString; // Return original if parsing fails
+      return timeString; 
     }
   };
 
@@ -326,7 +318,7 @@ export function TelemetryChart() {
         groupedMap.set(key, {
           count: 0,
           totalAssets: 0,
-          date: new Date(date), // Store a reference date for this group
+          date: new Date(date),
         });
       }
 
@@ -335,10 +327,9 @@ export function TelemetryChart() {
       group.totalAssets += item.activeAssets;
     });
 
-    // Convert grouped data to array
     const result = Array.from(groupedMap.entries()).map(([key, value]) => ({
       time: formatSortTimeDisplay(value.date.toISOString(), sortBy),
-      activeAssets: Math.round(value.totalAssets / value.count), // Average active assets
+      activeAssets: Math.round(value.totalAssets / value.count),
       originalDate: value.date,
     }));
 
