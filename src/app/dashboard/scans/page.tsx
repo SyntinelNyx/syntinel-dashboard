@@ -1,7 +1,7 @@
 "use client";
 import * as React from "react";
-import { useEffect, useState } from "react";
-import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
+import { useEffect, useState, useRef } from "react";
+import { ChevronDownIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -21,9 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -35,7 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
+import { NoteDialogCell } from "@/components/NotesDialog";
+import { LaunchScanDialog } from "@/components/LaunchScanDialog";
+import { ViewScanButton } from "@/components/ViewScan";
+
 
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
@@ -45,14 +45,19 @@ type Scan = {
   scanDate: string;
   scannerName: string;
   scannedBy: string;
+  notes: string;
 };
 
 export default function ScanPage() {
   const { toast } = useToast();
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) { return; }
+    hasFetched.current = true;
+
     async function fetchScans() {
       try {
         const res = await apiFetch("/scan/retrieve");
@@ -95,6 +100,7 @@ const columnLabels: Record<string, string> = {
   scanDate: "Scan Date",
   scannerName: "Scanner Name",
   scannedBy: "Scanned By",
+  actions: "Actions",
 };
 
 const columns: ColumnDef<Scan>[] = [
@@ -126,7 +132,7 @@ const columns: ColumnDef<Scan>[] = [
     cell: ({ row }) => {
       const raw = row.getValue("scanDate");
       const date = new Date(raw as string);
-      return <div>{date.toLocaleString()}</div>
+      return <div>{date.toLocaleString("en-US", { timeZoneName: "short" })}</div>
     },
   },
   {
@@ -142,31 +148,17 @@ const columns: ColumnDef<Scan>[] = [
     cell: ({ row }) => <div>{row.getValue("scannedBy")}</div>,
   },
   {
-    id: "actions",
-    enableHiding: false,
+    accessorKey: "actions",
+    header: "Actions",
     cell: ({ row }) => {
-      const scan = row.original;
+      const id = row.original.id as string;
+      const note = row.original.notes as string;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <DotsHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(scan.id)}
-            >
-              Copy Asset ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuItem>Manage Asset</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <>
+          <ViewScanButton id={id} />
+          <NoteDialogCell initialNote={note} scanID={id} />
+        </>
       );
     },
   },
@@ -174,15 +166,9 @@ const columns: ColumnDef<Scan>[] = [
 
 function DataTable({ data }: { data: Scan[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([],);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const [open, setOpen] = React.useState<boolean>(false);
-  const { toast } = useToast();
-
   const table = useReactTable({
     data,
     columns,
@@ -202,73 +188,11 @@ function DataTable({ data }: { data: Scan[] }) {
     },
   });
 
-  async function launchScans() {
-    try {
-      toast({
-        title: "Scan Launched!",
-        description: "Please wait for the scan to finish.",
-      });
-
-      const response = await apiFetch("/scan/launch", { method: "POST" });
-      if (!response.ok) {
-        throw new Error("Failed to launch scans");
-      }
-
-      localStorage.setItem("scanSuccess", JSON.stringify({
-        title: "Scan Finished Successfully!",
-        description: "Finished scanning all assets",
-      }));
-
-      window.location.reload();
-    } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "An error occurred while fetching roles";
-
-      toast({
-        variant: "destructive",
-        title: "Launch Scan Failed",
-        description: errorMessage,
-      });
-    }
-  }
-
-  useEffect(() => {
-    const toastData = localStorage.getItem("scanSuccess");
-    if (toastData) {
-      const { title, description } = JSON.parse(toastData);
-      toast({ title, description });
-      localStorage.removeItem("scanSuccess");
-    }
-  }, [toast]);
-
-
   return (
     <div className="mx-auto w-full max-w-4xl">
       <h1 className="mt-12 text-2xl font-bold">Scans</h1>
       <div className="flex justify-end -mt-8">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setOpen(true)}>Start New Scan</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Start Scan</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to start scans on <strong>all assets</strong>? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit"
-                onClick={async () => {
-                  setOpen(false);
-                  await launchScans();
-                }}
-              >Start Scan</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <LaunchScanDialog />
       </div>
       <div className="flex items-center justify-center py-4">
         <Input
