@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
-import { TrendingUp, ArrowLeft } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 import {
   ChartConfig,
   ChartContainer,
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/chart";
 import { apiFetch } from "@/lib/api-fetch";
 import { useToast } from "@/hooks/use-toast";
+import { BackButton } from "@/components/BackButton";
 
 export type AssetDetails = {
   assetId: string;
@@ -193,13 +193,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   return (
     <div className="mx-auto mt-8 max-w-6xl p-8">
       <div className="mb-6">
-        <Link
-          href="/dashboard/assets"
-          className="flex items-center text-sm font-medium text-primary hover:underline"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Assets
-        </Link>
+        <BackButton />
       </div>
 
       {/* Usage Analytics Chart */}
