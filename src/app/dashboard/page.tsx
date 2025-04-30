@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 
 import { TelemetryChart } from "@/components/TelemetryChart";
-import { VulnerabilityChart } from "@/components/VulnerabilityChart";
 import { VulnerabilitySeverityChart } from "@/components/VulnerabilitySeverityChart"
 
 import { useToast } from "@/hooks/use-toast";
@@ -23,10 +22,7 @@ export default function OverviewPage() {
     <div className="flex w-full flex-col items-center justify-center space-y-3 p-12">
       <TelemetryChart />
       <div className="flex space-x-3">
-        <div className="flex-1" style={{ flex: "0 0 50%" }}>
-          <VulnerabilityChart />
-        </div>
-        <div className="flex-1" style={{ flex: "0 0 50%" }}>
+        <div className="flex-1" style={{ flex: "0 0 100%" }}>
           <VulnerabilitySeverityChart trendingUp={false} />
         </div>
       </div>
