@@ -58,6 +58,8 @@ function RoleManagement() {
   const { toast } = useToast();
   const [roles, setRoles] = useState<Role[]>([]);
   const [isAddRoleOpen, setIsAddRoleOpen] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
+
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,7 +71,9 @@ function RoleManagement() {
         setIsLoading(true);
         const fetchedRoles = await fetchRoles();
         setRoles(fetchedRoles);
+        setIsDisabled(false);
       } catch (error) {
+        setIsDisabled(true);
         toast({
           title: "Error",
           description: `Failed to load roles: ${error}`,
@@ -81,8 +85,6 @@ function RoleManagement() {
     };
     loadRoles();
   }, [toast]);
-
-
 
   const handleDeleteRole = async (roleName: string) => {
     try {
@@ -135,14 +137,14 @@ function RoleManagement() {
       <h1 className="mb-5 text-2xl font-bold">Role Management</h1>
 
       <div className="mb-4">
-        <Dialog open={isAddRoleOpen} onOpenChange={setIsAddRoleOpen}>
+        {!isDisabled && (<Dialog open={isAddRoleOpen} onOpenChange={setIsAddRoleOpen}>
           <DialogTrigger asChild>
             <Button className="absolute right-0 top-0 m-12">Add New Role</Button>
           </DialogTrigger>
           <DialogContent>
             <RoleForm onSubmitSuccess={() => setIsAddRoleOpen(false)} allRoles={roles.map((r) => r.role)} />
           </DialogContent>
-        </Dialog>
+        </Dialog>)}
       </div>
 
       <Table>

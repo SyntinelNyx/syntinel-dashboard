@@ -73,8 +73,6 @@ export const RoleForm = ({ defaultValues, onSubmitSuccess, isEditing = false, al
       });
 
       setIsAdmin(isAdminDefaults);
-
-      console.log(defaultValues)
     }
   }, [defaultValues, reset]);
 
@@ -130,6 +128,8 @@ export const RoleForm = ({ defaultValues, onSubmitSuccess, isEditing = false, al
           title: isEditing ? "Updating Role Failed" : "Creating Role Failed",
           description: await response.json(),
         });
+
+
         return;
       }
 

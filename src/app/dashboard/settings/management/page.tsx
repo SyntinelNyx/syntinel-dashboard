@@ -55,6 +55,7 @@ function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const [resetOpenMap, setResetOpenMap] = useState<Record<string, boolean>>({});
@@ -69,13 +70,19 @@ function UserManagement() {
 
   async function getUsers() {
     const res = await apiFetch("/user/retrieve");
-    if (!res.ok) throw new Error("Failed to fetch users");
+    if (!res.ok) {
+      setIsDisabled(true);
+      throw new Error("Failed to fetch users");
+    }
     return res.json();
   }
 
   async function getRoles() {
     const res = await apiFetch("/role/retrieve");
-    if (!res.ok) throw new Error("Failed to fetch roles");
+    if (!res.ok) {
+      setIsDisabled(true);
+      throw new Error("Failed to fetch roles");
+    }
     return res.json();
   }
 
@@ -160,7 +167,9 @@ function UserManagement() {
         const [userData, roleData] = await Promise.all([getUsers(), getRoles()]);
         setUsers(userData ?? []);
         setRoles(roleData ?? []);
+        setIsDisabled(false)
       } catch (error) {
+        setIsDisabled(true);
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Failed to load user/roles",
@@ -190,7 +199,7 @@ function UserManagement() {
       <h1 className="mb-5 text-2xl font-bold">User Management</h1>
 
       <div className="absolute right-0 top-0 m-12">
-        <TooltipProvider>
+        {!isDisabled && (<TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <span>
@@ -213,6 +222,7 @@ function UserManagement() {
             )}
           </Tooltip>
         </TooltipProvider>
+        )}
       </div>
 
       <Table>
