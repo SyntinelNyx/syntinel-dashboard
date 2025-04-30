@@ -2,7 +2,8 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
+import { AlertCircle, AlertTriangle, AlertOctagon, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 import {
     ColumnDef,
@@ -42,6 +43,7 @@ import {
     TooltipTrigger,
     TooltipContent,
 } from "@/components/ui/tooltip";
+
 import { VulnerabilityCell } from "@/components/VulnerabilityCell"
 import { AssetsAffectedCell } from "@/components/AssetsAffectedCell"
 import { BackButton } from "@/components/BackButton";
@@ -54,10 +56,11 @@ type assetsAffected = {
     hostname: string;
 }
 
-type VulnerabilitySimple = {
+type Vulnerability = {
     id: string;
     status: "new" | "active" | "resurfaced" | "resolved";
     vulnerability: string;
+    severity: string;
     assetsAffected: assetsAffected[];
     lastSeen: string;
 };
@@ -104,14 +107,13 @@ export default function VulnsPage({ params }: { params: { slug: string } }) {
     const { slug } = params;
     const { toast } = useToast();
 
-    const [vulnsSimple, setVulnsSimple] = useState<VulnerabilitySimple[]>([]);
+    const [vulns, setVulns] = useState<Vulnerability[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [formattedDate, setFormattedDate] = useState<string>("");
-
     const hasFetched = useRef(false);
 
     useEffect(() => {
-        if (hasFetched.current) { return; }
+        if (hasFetched.current) return;
         hasFetched.current = true;
 
         async function fetchVulns() {
@@ -119,7 +121,7 @@ export default function VulnsPage({ params }: { params: { slug: string } }) {
                 const res = await apiFetch(`/vuln/retrieve-scan/${slug}`);
                 const json = await res.json();
 
-                setVulnsSimple(json);
+                setVulns(json);
 
                 if (json.length > 0) {
                     const date = new Date(json[0].lastSeen);
@@ -131,20 +133,13 @@ export default function VulnsPage({ params }: { params: { slug: string } }) {
                         minute: "2-digit",
                         timeZoneName: "short",
                     });
-
                     setFormattedDate(pretty);
                 }
-
             } catch (error) {
-                const errorMessage =
-                    error instanceof Error
-                        ? error.message
-                        : "An Unknown Error Has Occurred";
-
                 toast({
                     variant: "destructive",
                     title: "Vulnerability Fetch Failed",
-                    description: errorMessage,
+                    description: error instanceof Error ? error.message : "An Unknown Error Has Occurred",
                 });
             } finally {
                 setLoading(false);
@@ -161,48 +156,34 @@ export default function VulnsPage({ params }: { params: { slug: string } }) {
                     <p className="text-muted-foreground">Loading vulnerabilities...</p>
                 </div>
             ) : (
-                <DataTable data={vulnsSimple ?? []} formattedDate={formattedDate} />
+                <DataTable data={vulns} formattedDate={formattedDate} />
             )}
         </div>
     );
 }
 
-function DataTable({ data, formattedDate }: { data: VulnerabilitySimple[], formattedDate: string }) {
-    const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-        [],
-    );
-    const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({});
-    const [rowSelection, setRowSelection] = React.useState({});
+function DataTable({ data, formattedDate }: { data: Vulnerability[], formattedDate: string }) {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+    const [rowSelection, setRowSelection] = useState({});
+    const [searchMode, setSearchMode] = useState<"vulnerability" | "asset">("vulnerability");
 
-    const columnLabels: Record<string, string> = {
-        severity: "Severity",
-        vulnerability: "Vulnerability",
-        status: "Status",
-        assetsAffected: "Assets Affected",
-        lastSeen: "Last Seen",
-    };
-
-    const columns: ColumnDef<VulnerabilitySimple>[] = [
+    const columns: ColumnDef<Vulnerability>[] = [
         {
             accessorKey: "severity",
             header: "Severity",
+            sortingFn: (a, b) => {
+                const order = ["unknown", "low", "medium", "high", "critical"];
+                return order.indexOf((a.getValue("severity") as string).toLowerCase()) -
+                    order.indexOf((b.getValue("severity") as string).toLowerCase());
+            },
             cell: ({ row }) => {
                 const severity = (row.getValue("severity") as string).toLowerCase();
                 const { bg, text, icon, iconColor, animate } = severityStyles[severity];
-
                 return (
-                    <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
-                        {icon && (
-                            <span
-                                className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
-                                aria-label={`${severity} severity`}
-                            >
-                                {icon}
-                            </span>
-                        )}
-
+                    <div className="flex items-center gap-2 ml-4">
+                        {icon && <span className={`${iconColor} ${animate}`}>{icon}</span>}
                         <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
                             {severity}
                         </div>
@@ -213,128 +194,107 @@ function DataTable({ data, formattedDate }: { data: VulnerabilitySimple[], forma
         {
             accessorKey: "vulnerability",
             header: "Vulnerability",
-            cell: ({ row }) => {
-                const vulnID = row.getValue("vulnerability") as string;
-                return <VulnerabilityCell vulnID={vulnID} />;
-            },
+            cell: ({ row }) => <VulnerabilityCell vulnID={row.getValue("vulnerability")} />,
         },
         {
-            accessorKey: "assetsAffected",
+            id: "assetAffected",
+            accessorFn: (row) => row.assetsAffected.map((a) => a.hostname).join(", "),
             header: "Assets Affected",
-            cell: ({ row }) => {
-                const assets = row.getValue("assetsAffected") as assetsAffected[];
-                return <AssetsAffectedCell assets={assets} />;
-            },
+            cell: ({ row }) => <AssetsAffectedCell assets={row.original.assetsAffected} />,
         },
         {
             accessorKey: "lastSeen",
             header: "Last Seen",
+            sortingFn: (a, b) =>
+                new Date(a.getValue("lastSeen")).getTime() - new Date(b.getValue("lastSeen")).getTime(),
             cell: ({ row }) => {
-                const raw = row.getValue("lastSeen");
-                const date = new Date(raw as string);
-
-                const getRelativeTime = (date: Date) => {
+                const date = new Date(row.getValue("lastSeen"));
+                const getRelativeTime = (d: Date) => {
                     const now = new Date();
-                    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
+                    const diff = Math.floor((now.getTime() - d.getTime()) / 1000);
                     const units = [
-                        { label: 'second', threshold: 60 },
-                        { label: 'minute', threshold: 60 },
-                        { label: 'hour', threshold: 24 },
-                        { label: 'day', threshold: 30 },
-                        { label: 'month', threshold: 12 },
-                        { label: 'year', threshold: Infinity }
+                        { label: "second", threshold: 60 },
+                        { label: "minute", threshold: 60 },
+                        { label: "hour", threshold: 24 },
+                        { label: "day", threshold: 30 },
+                        { label: "month", threshold: 12 },
+                        { label: "year", threshold: Infinity },
                     ];
-
-                    let value = diffInSeconds;
-                    for (let i = 0; i < units.length; i++) {
-                        const unit = units[i];
-
-                        if (value < unit.threshold) {
-                            return `${Math.floor(value)} ${unit.label}${Math.floor(value) !== 1 ? 's' : ''} ago`;
-                        }
-
-                        value /= unit.threshold;
+                    let value = diff;
+                    for (let u of units) {
+                        if (value < u.threshold) return `${Math.floor(value)} ${u.label}${value !== 1 ? "s" : ""} ago`;
+                        value /= u.threshold;
                     }
                 };
-
                 return (
                     <Tooltip>
                         <TooltipTrigger>
                             <div>{getRelativeTime(date)}</div>
                         </TooltipTrigger>
-                        <TooltipContent>
-                            {date.toLocaleString("en-US", { timeZoneName: "short" })}
-                        </TooltipContent>
+                        <TooltipContent>{date.toLocaleString("en-US", { timeZoneName: "short" })}</TooltipContent>
                     </Tooltip>
                 );
             },
         },
         {
             id: "actions",
-            enableHiding: false,
-            cell: ({ row }) => {
-                const vulnerability = row.original;
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <DotsHorizontalIcon className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                                onClick={() => navigator.clipboard.writeText(vulnerability.vulnerability)}
-                            >
-                                Copy Vulnerability ID
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            },
+            cell: ({ row }) => (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <DotsHorizontalIcon className="h-4 w-4" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => navigator.clipboard.writeText(row.original.vulnerability)}>
+                            Copy Vulnerability ID
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            ),
         },
     ];
-
 
     const table = useReactTable({
         data,
         columns,
+        state: { sorting, columnFilters, columnVisibility, rowSelection },
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
         onRowSelectionChange: setRowSelection,
-        state: {
-            sorting,
-            columnFilters,
-            columnVisibility,
-            rowSelection,
-        },
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
     });
 
     return (
-        <div className="mx-auto w-full max-w-4xl user-select:text mt-6">
-            <div className="mt-4 flex flex-col items-start">
-                <BackButton />
-                <h1 className="text-2xl font-bold mt-2">
-                    {formattedDate ? `Scan Results for ${formattedDate}` : "Scan Results"}
-                </h1>
-            </div>
-            <div className="mt-2 flex items-center justify-center py-4">
+        <div className="mx-auto w-full max-w-4xl mt-6">
+            <BackButton />
+            <h1 className="text-2xl font-bold mt-2">
+                {formattedDate ? `Scan Results for ${formattedDate}` : "Scan Results"}
+            </h1>
+            <div className="mt-4 flex flex-wrap items-center gap-4 py-4">
+                <Select value={searchMode} onValueChange={(val) => setSearchMode(val as "vulnerability" | "asset")}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Search by..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="vulnerability">Vulnerability</SelectItem>
+                        <SelectItem value="asset">Asset</SelectItem>
+                    </SelectContent>
+                </Select>
                 <Input
-                    placeholder="Filter vulnerabilities..."
+                    placeholder={`Search ${searchMode}...`}
                     value={
-                        (table.getColumn("vulnerability")?.getFilterValue() as string) ?? ""
+                        (table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.getFilterValue() as string) ?? ""
                     }
-                    onChange={(event) =>
-                        table.getColumn("vulnerability")?.setFilterValue(event.target.value)
+                    onChange={(e) =>
+                        table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.setFilterValue(e.target.value)
                     }
                     className="max-w-sm"
                 />
@@ -355,7 +315,7 @@ function DataTable({ data, formattedDate }: { data: VulnerabilitySimple[], forma
                                     onCheckedChange={(value) => column.toggleVisibility(!!value)}
                                     onSelect={(e) => e.preventDefault()}
                                 >
-                                    {columnLabels[column.id] ?? column.id}
+                                    {column.id}
                                 </DropdownMenuCheckboxItem>
                             ))}
                     </DropdownMenuContent>
@@ -369,11 +329,17 @@ function DataTable({ data, formattedDate }: { data: VulnerabilitySimple[], forma
                                 {headerGroup.headers.map((header) => (
                                     <TableHead key={header.id}>
                                         {header.isPlaceholder ? null : (
-                                            <div className={header.column.id === "severity" ? "ml-4" : ""}>
-                                                {flexRender(
-                                                    header.column.columnDef.header,
-                                                    header.getContext(),
-                                                )}
+                                            <div
+                                                className={`flex items-center gap-1 ${header.column.getCanSort() ? "cursor-pointer select-none" : ""}`}
+                                                onClick={header.column.getToggleSortingHandler()}
+                                            >
+                                                {flexRender(header.column.columnDef.header, header.getContext())}
+                                                {{
+                                                    asc: <ChevronUp className="w-4 h-4" />,
+                                                    desc: <ChevronDown className="w-4 h-4" />,
+                                                }[header.column.getIsSorted() as string] ?? (
+                                                        <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />
+                                                    )}
                                             </div>
                                         )}
                                     </TableHead>
@@ -382,28 +348,19 @@ function DataTable({ data, formattedDate }: { data: VulnerabilitySimple[], forma
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {table.getRowModel().rows?.length ? (
+                        {table.getRowModel().rows.length ? (
                             table.getRowModel().rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() && "selected"}
-                                >
+                                <TableRow key={row.id}>
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
-                                            {flexRender(
-                                                cell.column.columnDef.cell,
-                                                cell.getContext(),
-                                            )}
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </TableCell>
                                     ))}
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell
-                                    colSpan={columns.length}
-                                    className="h-24 text-center"
-                                >
+                                <TableCell colSpan={columns.length} className="h-24 text-center">
                                     No vulnerabilities found.
                                 </TableCell>
                             </TableRow>
