@@ -257,16 +257,9 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   return (
     <div className="mx-auto mt-8 max-w-6xl p-8">
       <div className="mb-6">
-        <Link
-          href="/dashboard/assets"
-          className="flex items-center text-sm font-medium text-primary hover:underline"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Assets
-        </Link>
         <BackButton />
       </div>
-      <h1 className="mb-6 text-7xl font-bold"></h1>
+      <h1 className="text-2xl font-bold mb-6"></h1>
 
       {/* Terminal Section */}
       <Card className="mb-8">
