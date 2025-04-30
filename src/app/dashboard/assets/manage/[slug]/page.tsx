@@ -38,7 +38,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         }
         
         const data = await response.json();
-        setSnapshots(data);
+        setSnapshots(data || []); // Ensure we always set an array
       } catch (error) {
         console.error('Error fetching snapshots:', error);
         toast({
@@ -46,6 +46,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
           description: "Failed to load snapshots",
           variant: "destructive",
         });
+        setSnapshots([]); // Set empty array on error
       } finally {
         setIsLoading(false);
       }
@@ -65,7 +66,8 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         description: "Snapshot created successfully",
       });
       
-      fetchSnapshots();
+      const updatedSnapshots = await apiFetch(`/assets/snapshots/${slug}`, { method: 'GET' }).then(res => res.json());
+      setSnapshots(updatedSnapshots || []);
     } catch (error) {
       console.error('Error creating snapshot:', error);
       toast({
@@ -134,6 +136,10 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         </div>
         {isLoading ? (
           <div className="text-gray-500">Loading snapshots...</div>
+        ) : sortedSnapshots.length === 0 ? (
+          <div className="text-gray-500 py-4 text-center">
+            No snapshots available. Create your first snapshot using the button above.
+          </div>
         ) : (
           <Table>
             <TableHeader>
