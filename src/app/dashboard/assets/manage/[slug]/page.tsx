@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { apiFetch } from '@/lib/api-fetch';
+import { BackButton } from "@/components/BackButton";
 
 type Snapshot = {
   id: string;
@@ -121,9 +122,12 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   });
 
   return (
-    <div className="p-4 max-w-full mx-auto w-full">
-    <div className="mb-6"></div>
-  
+    <div className="mx-auto mt-8 max-w-6xl p-8">
+      <div className="mb-6">
+        <BackButton />
+      </div>
+      <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
+
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Snapshots</h2>

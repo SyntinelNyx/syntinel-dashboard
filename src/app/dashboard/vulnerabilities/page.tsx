@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
 
@@ -104,8 +104,12 @@ export default function VulnsPage() {
   const { toast } = useToast();
   const [vulns, setVulns] = useState<Vulnerability[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
+    if (hasFetched.current) { return; }
+    hasFetched.current = true;
+
     async function fetchVulns() {
       try {
         const res = await apiFetch("/vuln/retrieve");
@@ -180,7 +184,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
               </span>
             )}
 
-            <div className={`inline-flex ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
+            <div className={`inline-flex rounded-sm ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
               {severity}
             </div>
           </div>
@@ -193,6 +197,14 @@ function DataTable({ data }: { data: Vulnerability[] }) {
       cell: ({ row }) => {
         const vulnID = row.getValue("vulnerability") as string;
         return <VulnerabilityCell vulnID={vulnID} />;
+      },
+    },
+    {
+      accessorKey: "assetsAffected",
+      header: "Assets Affected",
+      cell: ({ row }) => {
+        const assets = row.getValue("assetsAffected") as assetsAffected[];
+        return <AssetsAffectedCell assets={assets} />;
       },
     },
     {
@@ -213,7 +225,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
         return (
           <div className="inline-block">
             <div className="inline-flex items-center gap-2">
-              <span className={`w-3 h-3 rounded-full ${dotColor}`}></span>
+              <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`}></span>
 
               <div className="font-semibold capitalize">
                 {status}
@@ -221,14 +233,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             </div>
           </div>
         );
-      },
-    },
-    {
-      accessorKey: "assetsAffected",
-      header: "Assets Affected",
-      cell: ({ row }) => {
-        const assets = row.getValue("assetsAffected") as assetsAffected[];
-        return <AssetsAffectedCell assets={assets} />;
       },
     },
     {
@@ -256,7 +260,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             const unit = units[i];
 
             if (value < unit.threshold) {
-              return `${Math.floor(value)} ${unit.label}${value !== 1 ? 's' : ''} ago`;
+              return `${Math.floor(value)} ${unit.label}${Math.floor(value) !== 1 ? 's' : ''} ago`;
             }
 
             value /= unit.threshold;
@@ -292,13 +296,11 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => navigator.clipboard.writeText(vulnerability.id)}
+                onClick={() => navigator.clipboard.writeText(vulnerability.vulnerability)}
               >
                 Copy Vulnerability ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>View Details</DropdownMenuItem>
-              <DropdownMenuItem>Manage Affected Assets</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -327,7 +329,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl user-select: text ">
       <h1 className="mt-12 text-2xl font-bold">Vulnerabilities</h1>
       <div className="mt-2 flex items-center justify-center py-4">
         <Input
