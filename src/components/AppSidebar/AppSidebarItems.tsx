@@ -49,12 +49,6 @@ export const items = [
     tooltip: "Actions for patching/deployments"
   },
   {
-    title: "Snapshots",
-    url: "/dashboard/snapshots",
-    icon: CircleFadingPlus,
-    tooltip: "List of snapshots from the assets"
-  },
-  {
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
