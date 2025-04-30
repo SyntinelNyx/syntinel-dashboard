@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -15,14 +14,10 @@ import {
 import { apiFetch } from '@/lib/api-fetch';
 import { BackButton } from "@/components/BackButton";
 
-// Update type for snapshot data to match the provided structure
 type Snapshot = {
   id: string;
-  host: string;
-  path: string;
-  startTime: string; // Adding this as it's used in your table
   endTime: string;
-  assetId: string;
+  size: string
 }
 
 export default function AssetPage({ params }: { params: { slug: string } }) {
@@ -31,21 +26,20 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
   const [isCreatingSnapshot, setIsCreatingSnapshot] = useState(false);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   useEffect(() => {
-    const fetchSnapshots = async () => {
+    const fetchData = async () => {
       try {
         setIsLoading(true);
         const response = await apiFetch(`/assets/snapshots/${slug}`, { method: 'Get' });
-
+        
         if (!response.ok) {
           throw new Error(`Failed to fetch snapshots: ${response.status}`);
         }
-
+        
         const data = await response.json();
-        setSnapshots(data);
+        setSnapshots(data || []); // Ensure we always set an array
       } catch (error) {
         console.error('Error fetching snapshots:', error);
         toast({
@@ -53,24 +47,28 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
           description: "Failed to load snapshots",
           variant: "destructive",
         });
+        setSnapshots([]); // Set empty array on error
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchSnapshots();
+  
+    fetchData();
   }, [slug, toast]);
 
   const handleCreateSnapshot = async () => {
     try {
       setIsCreatingSnapshot(true);
-      // This is where you would make an API call to create a snapshot
-      await apiFetch(`/assets/create-snapshots/${slug}`, { method: 'POST' });
 
+      await apiFetch(`/assets/create-snapshot/${slug}`, { method: 'POST' });
+      
       toast({
         title: "Success",
         description: "Snapshot created successfully",
       });
+      
+      const updatedSnapshots = await apiFetch(`/assets/snapshots/${slug}`, { method: 'GET' }).then(res => res.json());
+      setSnapshots(updatedSnapshots || []);
     } catch (error) {
       console.error('Error creating snapshot:', error);
       toast({
@@ -83,93 +81,93 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     }
   };
 
-  // Function to format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
-  // Calculate duration between start and end time
-  const calculateDuration = (startTime: string, endTime: string) => {
-    if (!startTime || !endTime) return "N/A";
-
-    const start = new Date(startTime).getTime();
-    const end = new Date(endTime).getTime();
-
-    if (isNaN(start) || isNaN(end)) return "Invalid time";
-
-    const durationMs = end - start;
-    if (durationMs < 0) return "Invalid duration";
-
-    // Format duration in a human-readable way
-    const seconds = Math.floor(durationMs / 1000);
-    if (seconds < 60) return `${seconds}s`;
-
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    if (minutes < 60) return `${minutes}m ${remainingSeconds}s`;
-
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
-    return `${hours}h ${remainingMinutes}m ${remainingSeconds}s`;
+  const formatSize = (sizeInBytes: string | number) => {
+    const bytes = typeof sizeInBytes === 'string' ? parseInt(sizeInBytes, 10) : sizeInBytes;
+    
+    if (isNaN(bytes)) return 'Unknown size';
+    
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    } else if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(2)} KB`;
+    } else if (bytes < 1024 * 1024 * 1024) {
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    } else {
+      return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
   };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedSnapshots = [...snapshots].sort((a, b) => {
+    if (!sortConfig) return 0;
+
+    const { key, direction } = sortConfig;
+    const aValue = key === 'size' ? parseInt(a[key as keyof Snapshot] as string, 10) : new Date(a[key as keyof Snapshot] as string).getTime();
+    const bValue = key === 'size' ? parseInt(b[key as keyof Snapshot] as string, 10) : new Date(b[key as keyof Snapshot] as string).getTime();
+
+    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   return (
     <div className="mx-auto mt-8 max-w-6xl p-8">
       <div className="mb-6">
         <BackButton />
       </div>
-      <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
+      <h1 className="text-2xl font-bold mb-6"></h1>
 
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Snapshots</h2>
-          <Button
-            onClick={handleCreateSnapshot}
+          <Button 
+            onClick={handleCreateSnapshot} 
             disabled={isCreatingSnapshot}
           >
             {isCreatingSnapshot ? 'Creating...' : 'Create Snapshot'}
           </Button>
         </div>
-
         {isLoading ? (
-          <p>Loading snapshots...</p>
+          <div className="text-gray-500">Loading snapshots...</div>
+        ) : sortedSnapshots.length === 0 ? (
+          <div className="text-gray-500 py-4 text-center">
+            No snapshots available. Create your first snapshot using the button above.
+          </div>
         ) : (
           <Table>
-            <TableCaption>List of snapshots for this asset</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">ID</TableHead>
-                <TableHead>Host</TableHead>
-                <TableHead>Path</TableHead>
-                <TableHead>Start Time</TableHead>
-                <TableHead>End Time</TableHead>
-                <TableHead className="text-right">Duration</TableHead>
+                {/* <TableHead>Snapshot ID</TableHead> */}
+                <TableHead onClick={() => handleSort('endTime')} className="cursor-pointer">
+                  Date Taken {sortConfig?.key === 'endTime' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </TableHead>
+                <TableHead onClick={() => handleSort('size')} className="cursor-pointer">
+                  Size {sortConfig?.key === 'size' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {snapshots.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    No snapshots available
-                  </TableCell>
+              {sortedSnapshots.map((snapshot) => (
+                <TableRow key={snapshot.id}>
+                  <TableCell>{formatDate(snapshot.endTime)}</TableCell>
+                  <TableCell>{formatSize(snapshot.size)}</TableCell>
                 </TableRow>
-              ) : (
-                snapshots.map((snapshot) => (
-                  <TableRow key={snapshot.id}>
-                    <TableCell className="font-medium">{snapshot.id.substring(0, 8)}...</TableCell>
-                    <TableCell>{snapshot.host}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{snapshot.path}</TableCell>
-                    <TableCell>{formatDate(snapshot.startTime)}</TableCell>
-                    <TableCell>{formatDate(snapshot.endTime)}</TableCell>
-                    <TableCell className="text-right">
-                      {calculateDuration(snapshot.startTime, snapshot.endTime)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
         )}
+
       </div>
     </div>
   );
