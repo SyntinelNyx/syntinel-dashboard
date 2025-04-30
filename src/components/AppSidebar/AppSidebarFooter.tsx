@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { User2, ChevronUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -20,6 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 export function AppSidebarFooter() {
   const router = useRouter();
   const { toast } = useToast();
+  const [username, setUsername] = useState<string>("");
 
   const handleSignOut = async () => {
     try {
@@ -52,6 +54,28 @@ export function AppSidebarFooter() {
     }
   };
 
+  useEffect(() => {
+    async function fetchUser() {
+      try {
+        const response = await apiFetch("/auth/validate", {
+          method: "GET",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user info");
+        }
+
+        const data = await response.json();
+        setUsername(data.accountUser);
+      } catch (error) {
+        console.error("Failed to fetch username", error);
+      }
+    }
+
+    fetchUser();
+  }, []);
+
+
   return (
     <SidebarFooter>
       <SidebarMenu>
@@ -59,7 +83,7 @@ export function AppSidebarFooter() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton>
-                <User2 /> {"demouser"}
+                <User2 /> {username}
                 <ChevronUp className="ml-auto" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
