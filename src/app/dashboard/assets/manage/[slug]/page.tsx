@@ -17,7 +17,7 @@ import {
 import { apiFetch } from "@/lib/api-fetch";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowLeft, LucideToggleRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 // Update type for snapshot data to match the provided structure
 type Snapshot = {
