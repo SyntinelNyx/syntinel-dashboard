@@ -158,7 +158,7 @@ function RoleManagement() {
           {roles.length === 0 ? (
             <TableRow>
               <TableCell colSpan={4} className="text-center italic text-muted-foreground">
-                There are currently no users.
+                There are currently no roles.
               </TableCell>
             </TableRow>
           ) : (
