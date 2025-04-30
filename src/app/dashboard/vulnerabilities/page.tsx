@@ -234,14 +234,9 @@ function DataTable({ data }: { data: Vulnerability[] }) {
 
         const dotColor = statusColors[status] ?? "bg-slate-400";
         return (
-          <div className="inline-block">
-            <div className="inline-flex items-center gap-2">
-              <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`}></span>
-
-              <div className="font-semibold capitalize">
-                {status}
-              </div>
-            </div>
+          <div className="inline-flex items-center gap-2">
+            <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`} />
+            <div className="font-semibold capitalize">{status}</div>
           </div>
         );
       },
@@ -301,7 +296,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
       enableSorting: false,
       cell: ({ row }) => {
         const vulnerability = row.original;
-
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -361,10 +355,10 @@ function DataTable({ data }: { data: Vulnerability[] }) {
         <Input
           placeholder={searchMode === "vulnerability" ? "Search vulnerability ID..." : "Search affected assets..."}
           value={
-            (table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetHostnames")?.getFilterValue() as string) ?? ""
+            (table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.getFilterValue() as string) ?? ""
           }
           onChange={(e) =>
-            table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetHostnames")?.setFilterValue(e.target.value)
+            table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.setFilterValue(e.target.value)
           }
           className="max-w-sm"
         />
@@ -444,7 +438,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
                   No vulnerabilities found.
