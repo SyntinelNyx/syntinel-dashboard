@@ -2,7 +2,8 @@
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { ChevronDownIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
-import { AlertCircle, AlertTriangle, AlertOctagon } from "lucide-react";
+import { AlertCircle, AlertTriangle, AlertOctagon, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 import {
   ColumnDef,
@@ -150,12 +151,10 @@ export default function VulnsPage() {
 
 function DataTable({ data }: { data: Vulnerability[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
-  );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [searchMode, setSearchMode] = React.useState<"vulnerability" | "asset">("vulnerability");
 
   const columnLabels: Record<string, string> = {
     severity: "Severity",
@@ -169,21 +168,23 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     {
       accessorKey: "severity",
       header: "Severity",
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const order = ["unknown", "low", "medium", "high", "critical"];
+        const a = rowA.getValue("severity") as string;
+        const b = rowB.getValue("severity") as string;
+        return order.indexOf(a.toLowerCase()) - order.indexOf(b.toLowerCase());
+      },
       cell: ({ row }) => {
         const severity = (row.getValue("severity") as string).toLowerCase();
         const { bg, text, icon, iconColor, animate } = severityStyles[severity];
-
         return (
           <div className="flex items-center gap-2 ml-4" role="status" aria-live="polite">
             {icon && (
-              <span
-                className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}
-                aria-label={`${severity} severity`}
-              >
+              <span className={`flex items-center justify-center ${iconColor} ${animate ?? ""}`}>
                 {icon}
               </span>
             )}
-
             <div className={`inline-flex rounded-sm ${bg} ${text} px-3 py-1 font-semibold capitalize`}>
               {severity}
             </div>
@@ -194,22 +195,33 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     {
       accessorKey: "vulnerability",
       header: "Vulnerability",
+      enableSorting: true,
       cell: ({ row }) => {
         const vulnID = row.getValue("vulnerability") as string;
         return <VulnerabilityCell vulnID={vulnID} />;
       },
     },
     {
-      accessorKey: "assetsAffected",
+      id: "assetAffected",
+      accessorFn: (row) => row.assetsAffected.map((a) => a.hostname).join(", "),
       header: "Assets Affected",
+      enableSorting: false,
+      enableColumnFilter: true,
       cell: ({ row }) => {
-        const assets = row.getValue("assetsAffected") as assetsAffected[];
+        const assets = row.original.assetsAffected;
         return <AssetsAffectedCell assets={assets} />;
       },
     },
     {
       accessorKey: "status",
       header: "Status",
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const order = ["new", "active", "resurfaced", "resolved"];
+        const a = rowA.getValue("status") as string;
+        const b = rowB.getValue("status") as string;
+        return order.indexOf(a.toLowerCase()) - order.indexOf(b.toLowerCase());
+      },
       cell: ({ row }) => {
         const status = (row.getValue("status") as string).toLowerCase();
 
@@ -221,16 +233,10 @@ function DataTable({ data }: { data: Vulnerability[] }) {
         };
 
         const dotColor = statusColors[status] ?? "bg-slate-400";
-
         return (
-          <div className="inline-block">
-            <div className="inline-flex items-center gap-2">
-              <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`}></span>
-
-              <div className="font-semibold capitalize">
-                {status}
-              </div>
-            </div>
+          <div className="inline-flex items-center gap-2">
+            <span className={`w-[14px] h-[14px] rounded-full ${dotColor}`} />
+            <div className="font-semibold capitalize">{status}</div>
           </div>
         );
       },
@@ -238,6 +244,12 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     {
       accessorKey: "lastSeen",
       header: "Last Seen",
+      enableSorting: true,
+      sortingFn: (rowA, rowB) => {
+        const a = new Date(rowA.getValue("lastSeen") as string).getTime();
+        const b = new Date(rowB.getValue("lastSeen") as string).getTime();
+        return a - b;
+      },
       cell: ({ row }) => {
         const raw = row.getValue("lastSeen");
         const date = new Date(raw as string);
@@ -281,10 +293,9 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     },
     {
       id: "actions",
-      enableHiding: false,
+      enableSorting: false,
       cell: ({ row }) => {
         const vulnerability = row.original;
-
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -308,7 +319,6 @@ function DataTable({ data }: { data: Vulnerability[] }) {
     },
   ];
 
-
   const table = useReactTable({
     data,
     columns,
@@ -329,16 +339,26 @@ function DataTable({ data }: { data: Vulnerability[] }) {
   });
 
   return (
-    <div className="mx-auto w-full max-w-4xl user-select: text ">
+    <div className="mx-auto w-full max-w-4xl user-select: text">
       <h1 className="mt-12 text-2xl font-bold">Vulnerabilities</h1>
-      <div className="mt-2 flex items-center justify-center py-4">
+      <div className="mt-2 flex flex-wrap items-center gap-4 py-4">
+        <Select value={searchMode} onValueChange={(val) => setSearchMode(val as "vulnerability" | "asset")}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Search by..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="vulnerability">Vulnerability</SelectItem>
+            <SelectItem value="asset">Asset</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Input
-          placeholder="Filter vulnerabilities..."
+          placeholder={searchMode === "vulnerability" ? "Search vulnerability ID..." : "Search affected assets..."}
           value={
-            (table.getColumn("vulnerability")?.getFilterValue() as string) ?? ""
+            (table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.getFilterValue() as string) ?? ""
           }
-          onChange={(event) =>
-            table.getColumn("vulnerability")?.setFilterValue(event.target.value)
+          onChange={(e) =>
+            table.getColumn(searchMode === "vulnerability" ? "vulnerability" : "assetAffected")?.setFilterValue(e.target.value)
           }
           className="max-w-sm"
         />
@@ -373,10 +393,23 @@ function DataTable({ data }: { data: Vulnerability[] }) {
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
                     {header.isPlaceholder ? null : (
-                      <div className={header.column.id === "severity" ? "ml-4" : ""}>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
+                      <div
+                        className={`flex items-center gap-1 ${header.column.getCanSort() ? "cursor-pointer select-none" : ""
+                          }`}
+                        onClick={
+                          header.column.getCanSort()
+                            ? header.column.getToggleSortingHandler()
+                            : undefined
+                        }
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getCanSort() && (
+                          {
+                            asc: <ChevronUp className="w-4 h-4" />,
+                            desc: <ChevronDown className="w-4 h-4" />,
+                          }[header.column.getIsSorted() as string] ?? (
+                            <ChevronsUpDown className="w-4 h-4 text-muted-foreground" />
+                          )
                         )}
                       </div>
                     )}
@@ -405,7 +438,7 @@ function DataTable({ data }: { data: Vulnerability[] }) {
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={columns.length}
+                  colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
                   No vulnerabilities found.
