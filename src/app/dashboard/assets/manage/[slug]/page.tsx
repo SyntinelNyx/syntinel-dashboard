@@ -126,7 +126,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
       <div className="mb-6">
         <BackButton />
       </div>
-      <h1 className="text-2xl font-bold mb-6">Asset: {slug}</h1>
+      <h1 className="text-2xl font-bold mb-6"></h1>
 
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">
