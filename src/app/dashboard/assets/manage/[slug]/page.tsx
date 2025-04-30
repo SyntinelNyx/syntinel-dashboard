@@ -112,8 +112,8 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
     if (!sortConfig) return 0;
 
     const { key, direction } = sortConfig;
-    const aValue = key === 'size' ? parseInt(a[key], 10) : new Date(a[key]).getTime();
-    const bValue = key === 'size' ? parseInt(b[key], 10) : new Date(b[key]).getTime();
+    const aValue = key === 'size' ? parseInt(a[key as keyof Snapshot] as string, 10) : new Date(a[key as keyof Snapshot] as string).getTime();
+    const bValue = key === 'size' ? parseInt(b[key as keyof Snapshot] as string, 10) : new Date(b[key as keyof Snapshot] as string).getTime();
 
     if (aValue < bValue) return direction === 'asc' ? -1 : 1;
     if (aValue > bValue) return direction === 'asc' ? 1 : -1;
