@@ -48,6 +48,17 @@ type TelemetryData = {
   disk: number;
 };
 
+type TelemetryApiItem = {
+  TelemetryTime?: string;
+  CheckTime?: string;
+  Hour?: string;
+  AssetsUp: number;
+  CpuUsage: number;
+  MemUsedPercent: number;
+  DiskUsedPercent: number;
+  TotalAssets?: number;
+};
+
 type ChartType = "line" | "bar" | "area";
 type SortBy = "month" | "week" | "day";
 
@@ -111,7 +122,7 @@ export function TelemetryChart() {
               originalDate: new Date(item.TelemetryTime || item.CheckTime || 0),
             }))
             .sort(
-              (a, b) => a.originalDate!.getTime() - b.originalDate!.getTime(),
+              (a: UptimeData, b: UptimeData) => a.originalDate!.getTime() - b.originalDate!.getTime(),
             );
 
           // Filter data based on the selected time range
@@ -147,8 +158,8 @@ export function TelemetryChart() {
           const json = await response.json();
 
           // Format data for usage charts
-          const formattedData = json.map((item: any) => ({
-            time: formatTimeDisplay(item.TelemetryTime || item.Hour),
+          const formattedData = json.map((item: TelemetryApiItem) => ({
+            time: formatTimeDisplay(item.TelemetryTime || item.Hour || ""),
             cpu: Math.round(item.CpuUsage),
             memory: Math.round(item.MemUsedPercent),
             disk: Math.round(item.DiskUsedPercent),
@@ -202,6 +213,8 @@ export function TelemetryChart() {
               originalDate: new Date(new Date(now).setHours(23, 59, 0, 0)),
             },
           ];
+
+          setUptimeData(mockData);
         } else {
           setTelemetryData([
             { time: "00:00", cpu: 45, memory: 30, disk: 20 },
@@ -285,52 +298,52 @@ export function TelemetryChart() {
     sortOption: SortBy,
   ): UptimeData[] => {
     if (!data.length) return [];
-
+  
     const groupedMap = new Map<
       string,
       { count: number; totalAssets: number; date: Date }
     >();
-
+  
     // Group data points
     data.forEach((item) => {
       if (!item.originalDate) return;
-
-      let key: string;
+  
+      let groupKey: string;
       const date = item.originalDate;
-
+  
       switch (sortOption) {
         case "month":
           // For month view, group by day in that month (YYYY-MM-DD)
-          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+          groupKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
           break;
         case "week":
           // For week view, group by day (YYYY-MM-DD) for the past 7 days
-          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+          groupKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
           break;
         case "day":
         default:
           // For day view, group by hour (YYYY-MM-DD HH) for the past 24 hours
-          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}`;
+          groupKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")} ${String(date.getHours()).padStart(2, "0")}`;
           break;
       }
 
-      if (!groupedMap.has(key)) {
-        groupedMap.set(key, {
+      if (!groupedMap.has(groupKey)) {
+        groupedMap.set(groupKey, {
           count: 0,
           totalAssets: 0,
           date: new Date(date),
         });
       }
-
-      const group = groupedMap.get(key)!;
+  
+      const group = groupedMap.get(groupKey)!;
       group.count++;
       group.totalAssets += item.activeAssets;
     });
 
-    const result = Array.from(groupedMap.entries()).map(([key, value]) => ({
-      time: formatSortTimeDisplay(value.date.toISOString(), sortBy),
-      activeAssets: Math.round(value.totalAssets / value.count),
-      originalDate: value.date,
+    const result = Array.from(groupedMap.entries()).map((entry) => ({
+      time: formatSortTimeDisplay(entry[1].date.toISOString(), sortBy),
+      activeAssets: Math.round(entry[1].totalAssets / entry[1].count),
+      originalDate: entry[1].date,
     }));
 
     // Sort by date

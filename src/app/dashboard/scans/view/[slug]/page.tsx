@@ -221,7 +221,7 @@ function DataTable({ data, formattedDate }: { data: Vulnerability[], formattedDa
                         { label: "year", threshold: Infinity },
                     ];
                     let value = diff;
-                    for (let u of units) {
+                    for (const u of units) {
                         if (value < u.threshold) return `${Math.floor(value)} ${u.label}${value !== 1 ? "s" : ""} ago`;
                         value /= u.threshold;
                     }

@@ -60,6 +60,13 @@ type UtilizationData = {
   disk: number;
 };
 
+export type TelemetryData = {
+  TelemetryTime: string;
+  CpuUsage: number;
+  MemUsedPercent: number;
+  DiskUsedPercent: number;
+};
+
 const chartConfig = {
   cpu: {
     label: "CPU Usage",
@@ -117,7 +124,7 @@ export default function AssetPage({ params }: { params: { slug: string } }) {
         const json = await res.json();
 
         // Format the data for the chart
-        const formattedData = json.map((item: any) => ({
+        const formattedData = json.map((item: TelemetryData) => ({
           time: new Date(item.TelemetryTime).toLocaleTimeString([], {
             hour: "2-digit",
             minute: "2-digit",

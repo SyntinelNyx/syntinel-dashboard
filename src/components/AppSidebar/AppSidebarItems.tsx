@@ -3,7 +3,6 @@ import {
   HardDrive,
   Bug,
   ChevronsLeftRightEllipsis,
-  CircleFadingPlus,
   Blocks,
   Settings,
   Container,
